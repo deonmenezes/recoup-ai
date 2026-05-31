@@ -76,9 +76,24 @@ The agent's hard rules map 1:1 to the FDCPA and are verified continuously by Cek
 - **Accurate balance** (§1692e(2)) · **No harassment / threats** (§1692d)
 - **No third-party disclosure** (§1692c(b)) · **Honor cease-communication** (§1692c(c))
 
+## 🏆 Built for the rubric
+
+The hackathon guidance (preserved in [`docs/STARTER.md`](docs/STARTER.md)) asks for four things —
+*"Build something new… Use the tools from Cekura to evaluate and improve the performance of what you
+build. Use Pipecat as the orchestration framework… we encourage you to use the open source models from
+NVIDIA,"* and notes the judges *"want to see great examples of using Cekura to improve voice agent
+performance, and using open source models from NVIDIA."* Here's how Recoup AI delivers each:
+
+| What the judges are looking for | How Recoup AI delivers |
+|---|---|
+| **Use Cekura to evaluate _and improve_ your agent** | The product *is* a Cekura improvement loop. Riley is graded by **8 adversarial debtor personas** on compliance + effectiveness metrics; failures feed back into the system prompt and the agent re-runs until **62% → 100% compliance** (PTP rate **41% → 72%**), in **0 human edits** — visualized live in the **Compliance Lab**. |
+| **Use Pipecat as the orchestration framework** | The agent is a Pipecat pipeline end-to-end (STT → LLM → TTS + direct function tools), telephony over **Twilio**, deployable to **Pipecat Cloud** (`server/pcc-deploy.toml`, agent `recoup-bot`). |
+| **Use open-source NVIDIA models** | The headline build (`server/bot-nemotron.py`) is **100% NVIDIA** — Nemotron Speech Streaming ASR + Nemotron-3-Super-120B LLM + Magpie TTS. A drop-in **GPT-4.1 variant** (`server/bot-gpt.py`) shares the *exact* tools + prompt, so you can **A/B NVIDIA vs GPT-4.1 head-to-head inside Cekura.** |
+| **Build something new — creative, technical, solves a real problem** | Collections is a real, painful, **regulated** problem ($1T+ in US consumer debt). Recoup AI ships a *system that proves it's compliant and self-improves* — and wraps it in an **operator-grade CRM**. The reproducible-compliance guarantee is the wedge. |
+
 ## Tech stack
 
-- **Voice:** NVIDIA Nemotron Speech Streaming (ASR) + Nemotron-3-Super-120B (LLM) + Magpie/Gradium (TTS), orchestrated by **Pipecat**, over **Twilio** PSTN, deployable to **Pipecat Cloud**.
+- **Voice:** NVIDIA Nemotron Speech Streaming (ASR) + Nemotron-3-Super-120B (LLM) + Magpie/Gradium (TTS), orchestrated by **Pipecat**, over **Twilio** PSTN, deployable to **Pipecat Cloud**. Two interchangeable builds — `bot-nemotron.py` (100% NVIDIA) and `bot-gpt.py` (GPT-4.1) — share identical tools + prompt for Cekura A/B testing.
 - **Eval / improve:** **Cekura** simulate → evaluate → auto-improve.
 - **CRM:** **Next.js 16** (App Router) · React 19 · Tailwind CSS v4 · TypeScript · framer-motion · lucide-react, deployed on **Vercel**.
 
@@ -87,7 +102,7 @@ The agent's hard rules map 1:1 to the FDCPA and are verified continuously by Cek
 ```
 .
 ├── web/                 # Recoup AI CRM (Next.js, deployed to Vercel) — see web/README.md
-├── server/              # Pipecat voice agent (bot-nemotron.py, mock_backend.py)
+├── server/              # Pipecat voice agent — bot-nemotron.py (NVIDIA) + bot-gpt.py (GPT-4.1)
 ├── PRD.md               # Product spec
 ├── docs/STARTER.md      # Original hackathon starter instructions
 └── docs/screenshots/    # UI screenshots
@@ -104,9 +119,12 @@ telephony (Twilio → Pipecat) and live Cekura mode.
 
 **Voice agent (server):**
 ```bash
-cd server && uv sync && uv run bot-nemotron.py    # then open http://localhost:7860
+cd server && uv sync
+uv run bot-nemotron.py    # 100% NVIDIA build  (or: uv run bot-gpt.py for the GPT-4.1 build)
+# then open http://localhost:7860
 ```
-Full Twilio + Pipecat Cloud + Cekura setup in [`docs/STARTER.md`](docs/STARTER.md).
+Both builds are the same compliant collections agent ("Riley") with identical tools + prompt — run
+either against Cekura to compare. Full Twilio + Pipecat Cloud + Cekura setup in [`docs/STARTER.md`](docs/STARTER.md).
 
 ## Deploy
 

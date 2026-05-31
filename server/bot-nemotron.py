@@ -4,14 +4,19 @@
 # SPDX-License-Identifier: BSD 2-Clause License
 #
 
-"""Field & Flower — flower shop voice ordering bot (hackathon starter).
+"""Recoup AI — collections voice agent (NVIDIA Nemotron variant).
 
-A customer calls in and the bot helps them pick a bouquet and arrange delivery.
-All backend calls (catalog, customer lookup, order placement) are mocked so the
-starter runs with no external dependencies beyond the AI services.
+"Riley", a calm, FDCPA-compliant account-resolution specialist. Places an
+outbound call about a past-due account: verifies the right party, delivers the
+required disclosures, negotiates a promise-to-pay or payment plan, and hard-stops
+on disputes / cease requests. Compliance always outranks collecting.
 
-Pipeline: Nemotron Speech Streaming STT → Nemotron-3-Super-120B LLM → Gradium TTS, with direct
-function tools registered on the LLM context.
+This is the 100%-NVIDIA build of the agent (same tools + system prompt as
+``bot-gpt.py``), so you can A/B the two LLMs against the Cekura eval suite. All
+backend calls are mocked (server/mock_backend.py) — no real PII or payments.
+
+Pipeline: Nemotron Speech Streaming STT → Nemotron-3-Super-120B LLM → Magpie/Gradium TTS,
+with direct function tools registered on the LLM context.
 
 Run the bot using::
 
