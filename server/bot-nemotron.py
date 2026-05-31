@@ -484,11 +484,11 @@ STYLE: sound like a real, calm human agent. 1–2 short sentences per turn, ask 
     @transport.event_handler("on_client_connected")
     async def on_client_connected(transport, client):
         logger.info("Client connected")
-        # Outbound-call etiquette: wait a beat so the callee has the phone to
-        # their ear before Riley speaks — otherwise the greeting plays over the
-        # pickup and feels like the bot is "already talking." VAD turn-taking
-        # then waits for the callee's reply after each line.
-        await asyncio.sleep(2.0)
+        # Tiny beat so Twilio's answer transition doesn't clip Riley's first
+        # word — but short, so the callee never hears dead air (a longer pause
+        # reads as "nothing's happening" and they hang up). Riley says one line,
+        # then VAD waits for their reply.
+        await asyncio.sleep(0.4)
         # Kick off the conversation
         context.add_message(
             {
