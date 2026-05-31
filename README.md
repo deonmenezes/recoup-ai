@@ -6,6 +6,10 @@
 
 **[▶ Live demo — recoup-ai.vercel.app](https://recoup-ai.vercel.app)** · Built for the **YC Voice Agents Hackathon**
 
+📞 **Real voice, live:** click **"Call me"** on the site, enter a US/Canada number, and Riley (the live
+NVIDIA-Nemotron Pipecat agent on Pipecat Cloud) calls your phone via Twilio and runs a fully compliant
+collections call.
+
 `Pipecat` · `NVIDIA Nemotron` · `Twilio` · `Cekura` · `Next.js 16` · `Vercel`
 
 <img src="docs/screenshots/dashboard.png" alt="Recoup AI dashboard" width="880" />
