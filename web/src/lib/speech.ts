@@ -66,9 +66,63 @@ export function speak(text: string, role: Role = "agent") {
 
 /** Stop any queued/active speech immediately (call on hang-up / unmount / mute). */
 export function cancelSpeech() {
-  if (typeof window !== "undefined" && window.speechSynthesis) {
-    window.speechSynthesis.cancel();
+  if (typeof window === "undefined") return;
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.src = "";
+    currentAudio = null;
   }
+}
+
+// ── NVIDIA Magpie pre-generated clips (the real agent voice) ────────────────
+// Riley's lines are synthesized ahead of time with NVIDIA Magpie (the same
+// voice the live phone bot uses) and played here, so the in-browser call uses
+// the real NVIDIA voice rather than the browser's generic TTS. The debtor's
+// (human) side stays on browser speech.
+let manifest: Set<string> | null = null;
+let currentAudio: HTMLAudioElement | null = null;
+
+/** FNV-1a 32-bit — MUST match scripts/dump-lines.mjs hashText(). */
+export function hashText(s: string): string {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return (h >>> 0).toString(36);
+}
+
+/** Load the manifest of available NVIDIA clips (call once on mount). */
+export async function loadCallAudioManifest(): Promise<void> {
+  if (manifest || typeof window === "undefined") return;
+  try {
+    const res = await fetch("/call-audio/manifest.json", { cache: "force-cache" });
+    manifest = res.ok ? new Set<string>(await res.json()) : new Set();
+  } catch {
+    manifest = new Set();
+  }
+}
+
+/** True if a pre-generated NVIDIA Magpie clip exists for this line. */
+export function hasNvidiaVoice(text: string): boolean {
+  return !!manifest && manifest.has(hashText(text));
+}
+
+/** Play the NVIDIA Magpie clip for this line. Returns false if unavailable. */
+export function playNvidiaLine(text: string, onEnd?: () => void): boolean {
+  if (typeof window === "undefined" || !hasNvidiaVoice(text)) return false;
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  const audio = new Audio(`/call-audio/${hashText(text)}.mp3`);
+  currentAudio = audio;
+  if (onEnd) audio.onended = onEnd;
+  audio.play().catch(() => {
+    /* autoplay blocked / decode error — caller keeps the transcript moving */
+  });
+  return true;
 }
 
 export function speechSupported(): boolean {

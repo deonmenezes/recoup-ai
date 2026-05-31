@@ -11,7 +11,7 @@ import { COMPLIANCE_CHECKS } from "@/lib/data";
 import { money, clock } from "@/lib/format";
 import type { ComplianceKey } from "@/lib/types";
 import { cn } from "@/lib/cn";
-import { speak, cancelSpeech, primeVoices } from "@/lib/speech";
+import { speak, cancelSpeech, primeVoices, playNvidiaLine, loadCallAudioManifest } from "@/lib/speech";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
 import { CallStage } from "./CallStage";
@@ -74,9 +74,10 @@ export function CallConsole({ accountId, onClose }: { accountId: string; onClose
   useEffect(() => {
     mutedRef.current = muted;
   }, [muted]);
-  // Warm up speech-synthesis voices on mount (they load asynchronously).
+  // Warm up speech-synthesis voices + load NVIDIA Magpie clip manifest on mount.
   useEffect(() => {
     primeVoices();
+    loadCallAudioManifest();
   }, []);
 
   // ── Right-panel tab state ─────────────────────────────────────────────────
@@ -223,9 +224,15 @@ export function CallConsole({ accountId, onClose }: { accountId: string; onClose
         // Append turn with empty text (will be streamed)
         setRevealedTurns((prev) => [...prev, { turn, visibleText: "" }]);
 
-        // Actual voice: read the line aloud with role-specific voices (unless muted).
+        // Actual voice: Riley speaks in the real NVIDIA Magpie voice (pre-rendered
+        // clip); the debtor's human side uses browser speech. Falls back to
+        // browser TTS if a clip isn't available. Gated by mute.
         if (turn.role !== "system" && !mutedRef.current) {
-          speak(turn.text, turn.role === "agent" ? "agent" : "debtor");
+          if (turn.role === "agent" && playNvidiaLine(turn.text)) {
+            // played via NVIDIA Magpie
+          } else {
+            speak(turn.text, turn.role === "agent" ? "agent" : "debtor");
+          }
         }
 
         // For agent turns: character-stream; for others: reveal immediately
