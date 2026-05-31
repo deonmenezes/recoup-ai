@@ -11,6 +11,7 @@ import { COMPLIANCE_CHECKS } from "@/lib/data";
 import { money, clock } from "@/lib/format";
 import type { ComplianceKey } from "@/lib/types";
 import { cn } from "@/lib/cn";
+import { speak, cancelSpeech, primeVoices } from "@/lib/speech";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
 import { CallStage } from "./CallStage";
@@ -68,6 +69,15 @@ export function CallConsole({ accountId, onClose }: { accountId: string; onClose
   const [muted, setMuted] = useState(false);
   // Mirror satisfiedKeys in a ref so hangUp always has the latest value
   const satisfiedKeysRef = useRef<Set<ComplianceKey>>(new Set());
+  // Mute mirrored in a ref so the scheduled turn callbacks read the latest value.
+  const mutedRef = useRef(false);
+  useEffect(() => {
+    mutedRef.current = muted;
+  }, [muted]);
+  // Warm up speech-synthesis voices on mount (they load asynchronously).
+  useEffect(() => {
+    primeVoices();
+  }, []);
 
   // ── Right-panel tab state ─────────────────────────────────────────────────
   const [rightTab, setRightTab] = useState<"transcript" | "compliance">("transcript");
@@ -89,6 +99,8 @@ export function CallConsole({ accountId, onClose }: { accountId: string; onClose
   function clearAllTimeouts() {
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
+    // Stop any in-flight / queued speech when the call ends or unmounts.
+    cancelSpeech();
   }
 
   // ── Stream a single turn's text character by character ───────────────────
@@ -210,6 +222,11 @@ export function CallConsole({ accountId, onClose }: { accountId: string; onClose
 
         // Append turn with empty text (will be streamed)
         setRevealedTurns((prev) => [...prev, { turn, visibleText: "" }]);
+
+        // Actual voice: read the line aloud with role-specific voices (unless muted).
+        if (turn.role !== "system" && !mutedRef.current) {
+          speak(turn.text, turn.role === "agent" ? "agent" : "debtor");
+        }
 
         // For agent turns: character-stream; for others: reveal immediately
         if (turn.role === "agent") {
@@ -581,7 +598,13 @@ export function CallConsole({ accountId, onClose }: { accountId: string; onClose
               elapsedMs={elapsedMs}
               agentSpeaking={agentSpeaking}
               muted={muted}
-              onToggleMute={() => setMuted((m) => !m)}
+              onToggleMute={() =>
+                setMuted((m) => {
+                  const next = !m;
+                  if (next) cancelSpeech();
+                  return next;
+                })
+              }
               onEndCall={() => hangUp(true)}
               activeStepId={activeStepId}
               completedStepIds={completedStepIds}

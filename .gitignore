@@ -230,3 +230,8 @@ pipecat-core-code/
 .recoup-*.mjs
 .vercel
 .DS_Store
+
+# Re-include the web app TypeScript lib (the generic Python `lib/` rule above
+# unintentionally ignored web/src/lib).
+!web/src/lib/
+!web/src/lib/**
