@@ -14,6 +14,14 @@ collections call.
 
 <img src="docs/screenshots/dashboard.png" alt="Recoup AI dashboard" width="880" />
 
+<br/><br/>
+
+**🎥 Demo walkthrough**
+
+<video src="https://github.com/deonmenezes/recoup-ai/raw/main/demo/recoup-ai-demo.mp4" controls muted width="880"></video>
+
+<sub>▶ If the inline player doesn't load in your browser, <a href="https://github.com/deonmenezes/recoup-ai/raw/main/demo/recoup-ai-demo.mp4">click here to watch / download the MP4</a>.</sub>
+
 </div>
 
 ---
