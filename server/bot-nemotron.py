@@ -23,6 +23,7 @@ Run the bot using::
     uv run bot-nemotron.py
 """
 
+import asyncio
 import os
 import random
 from datetime import date
@@ -455,14 +456,20 @@ Today is {today_str}. Only proceed if it's between 8am and 9pm for the debtor; i
     @transport.event_handler("on_client_connected")
     async def on_client_connected(transport, client):
         logger.info("Client connected")
+        # Outbound-call etiquette: wait a beat so the callee has the phone to
+        # their ear before Riley speaks — otherwise the greeting plays over the
+        # pickup and feels like the bot is "already talking." VAD turn-taking
+        # then waits for the callee's reply after each line.
+        await asyncio.sleep(2.0)
         # Kick off the conversation
         context.add_message(
             {
                 "role": "user",
                 "content": (
-                    "Someone has answered — you do NOT yet know who it is. Open the call: a brief, "
-                    f"warm greeting and ask if you're speaking with {first_name}. Do NOT name the "
-                    "company or mention any debt, balance, or creditor — verify identity first."
+                    "The person has just picked up. Open the call now: say a brief, warm greeting and "
+                    f"ask if you're speaking with {first_name}. Keep it to ONE short sentence, then STOP "
+                    "and wait for their reply. Do NOT name the company or mention any debt, balance, or "
+                    "creditor yet — verify identity first."
                 ),
             }
         )

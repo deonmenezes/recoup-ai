@@ -101,7 +101,7 @@ performance, and using open source models from NVIDIA."* Here's how Recoup AI de
 | What the judges are looking for | How Recoup AI delivers |
 |---|---|
 | **Use Cekura to evaluate _and improve_ your agent** | The product *is* a Cekura improvement loop. Riley is graded by **8 adversarial debtor personas** on compliance + effectiveness metrics; failures feed back into the system prompt and the agent re-runs until **62% → 100% compliance** (PTP rate **41% → 72%**), in **0 human edits** — visualized live in the **Compliance Lab**. |
-| **Use Pipecat as the orchestration framework** | The agent is a Pipecat pipeline end-to-end (STT → LLM → TTS + direct function tools), telephony over **Twilio**, deployable to **Pipecat Cloud** (`server/pcc-deploy.toml`, agent `recoup-bot`). |
+| **Use Pipecat as the orchestration framework** | The agent is a Pipecat pipeline end-to-end (STT → LLM → TTS + direct function tools), telephony over **Twilio**, deployable to **Pipecat Cloud** (`server/pcc-deploy.toml`; live as `flower-bot.deon`). |
 | **Use open-source NVIDIA models** | The headline build (`server/bot-nemotron.py`) is **100% NVIDIA** — Nemotron Speech Streaming ASR + Nemotron-3-Super-120B LLM + Magpie TTS. A drop-in **GPT-4.1 variant** (`server/bot-gpt.py`) shares the *exact* tools + prompt, so you can **A/B NVIDIA vs GPT-4.1 head-to-head inside Cekura.** |
 | **Build something new — creative, technical, solves a real problem** | Collections is a real, painful, **regulated** problem ($1T+ in US consumer debt). Recoup AI ships a *system that proves it's compliant and self-improves* — and wraps it in an **operator-grade CRM**. The reproducible-compliance guarantee is the wedge. |
 
