@@ -16,11 +16,13 @@ collections call.
 
 <br/><br/>
 
-**🎥 Demo walkthrough**
+**🎥 Demo walkthrough** — click to play the full 1:40 video
 
-<video src="https://github.com/deonmenezes/recoup-ai/raw/main/demo/recoup-ai-demo.mp4" controls muted width="880"></video>
+<a href="https://github.com/deonmenezes/recoup-ai/blob/main/demo/recoup-ai-demo.mp4">
+  <img src="docs/screenshots/demo-poster.jpg" alt="▶ Watch the Recoup AI demo — a live, FDCPA-compliant AI collections call" width="880" />
+</a>
 
-<sub>▶ If the inline player doesn't load in your browser, <a href="https://github.com/deonmenezes/recoup-ai/raw/main/demo/recoup-ai-demo.mp4">click here to watch / download the MP4</a>.</sub>
+<sub>▶ <a href="https://github.com/deonmenezes/recoup-ai/blob/main/demo/recoup-ai-demo.mp4">Watch the 1:40 walkthrough</a> (plays in GitHub's video viewer) · <a href="https://github.com/deonmenezes/recoup-ai/raw/main/demo/recoup-ai-demo.mp4">direct MP4</a></sub>
 
 </div>
 
