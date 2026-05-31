@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Menu, Search, RotateCcw, Sparkles } from "lucide-react";
 import { activeNav } from "@/lib/nav";
 import { IconButton } from "@/components/ui/Button";
+import { CallMeButton } from "@/components/call/CallMeDialog";
 import { resetDemo } from "@/lib/store";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/cn";
@@ -51,10 +52,12 @@ export function TopNav({ onMenu }: { onMenu: () => void }) {
           />
         </form>
 
-        <span className="hidden items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary md:inline-flex">
+        <span className="hidden items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary lg:inline-flex">
           <Sparkles className="size-3.5" />
           Demo data
         </span>
+
+        <CallMeButton size="sm" label="Call me" />
 
         <IconButton
           label="Reset demo data"
