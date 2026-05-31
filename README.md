@@ -1,238 +1,123 @@
-# YC Voice Agents Hackathon
+<div align="center">
 
-Welcome to the YC Voice Agents Hackathon, hosted by [Cekura](https://cekura.com) and [Daily](https://daily.co), in partnership with [NVIDIA](https://nvidia.com), [AWS](https://aws.amazon.com), and [Twilio](https://twilio.com).
+# 🛡️ Recoup AI
 
-The goal of this event is to learn about building, scaling, evaluating, and continuously improving voice agents.
+### Self-improving, FDCPA-compliant AI voice agents for debt collection — with a Salesforce-style CRM.
 
-## Schedule, rules, and prizes
+**[▶ Live demo — recoup-ai.vercel.app](https://recoup-ai.vercel.app)** · Built for the **YC Voice Agents Hackathon**
 
-This is a one-day event. Please arrive by 8:30. We'll kick things off at 9:00.
+`Pipecat` · `NVIDIA Nemotron` · `Twilio` · `Cekura` · `Next.js 16` · `Vercel`
 
-### Schedule
+<img src="docs/screenshots/dashboard.png" alt="Recoup AI dashboard" width="880" />
 
-  - 8:00 AM – Doors open & registration
-  - 8:30 AM – Breakfast
-  - 9:00 AM – Welcome / Hackathon begins
-  - 12:00 PM – Lunch
-  - 6:00 PM – Submissions due
-  - 6:00 - 8:00 PM – Dinner, demos, and conversation
-  - 8:00 PM – Judges' presentations
-  - 9:00 PM – We all go home
+</div>
 
-### General guidance
+---
 
-First of all, please respect the YC space. We very much appreciate YC hosting these events. Stay in the designated areas, clean up after meals, and in general be a good guest.
+## The one-liner
 
-Build something new for this hackathon. Use the tools from Cekura to evaluate and improve the performance of what you build. Use Pipecat as the orchestration framework for your voice agent. We also encourage you to use the open source models from NVIDIA, but it's okay to use any models that work well for your project.
+AI voice agents that call debtors, negotiate a promise-to-pay, and stay **100% compliant** — and that
+**continuously self-improve**, because every release is graded by a simulated-caller eval suite
+(Cekura) that feeds failures back into the agent until it hits 100% compliance.
 
-There will be engineers from Cekura, Daily, NVIDIA, AWS, and Twilio available to help you with your project. Don't hesitate to find us.
+This repo ships two halves:
 
-Judging will start at 6:00. In general, the judges want to showcase interesting projects rather than just pick winners. So don't worry too much about what the judges are looking for in a project. Build something that demonstrates creativity, is interesting on a technical level, or solves a real problem! But do keep in mind that the judges want to see great examples of using Cekura to improve voice agent performance, and using open source models from NVIDIA.
+1. **The voice agent** (`server/`) — a Pipecat pipeline (NVIDIA Nemotron ASR + LLM, Magpie/Gradium TTS)
+   that places compliant outbound collections calls over Twilio. Agent "Riley" verifies the right party,
+   delivers the mini-Miranda, negotiates a payment plan, and hard-stops on disputes / cease requests.
+2. **The CRM** (`web/`) — a **Salesforce-Lightning-style operator cockpit** to ring outstanding debts,
+   watch FDCPA compliance light up *in real time* during the call, and prove the agent auto-improves
+   from **62% → 100%** compliance via Cekura.
 
+## Why collections is the wedge
 
-# Tech stack and starting points.
+Collections is manual, expensive, inconsistent, and a legal minefield. A single non-compliant line — a
+threat, disclosing a debt to the wrong person, calling after 9pm — is a regulatory liability. Teams
+can't scale coverage without scaling risk, and today they tune scripts on vibes and hope.
 
-This repo contains two versions of a voice agent built with [Pipecat](https://pipecat.ai).
+Recoup AI doesn't ship "a voice agent that works in a demo." It ships a **system that proves it works and
+gets better on its own.**
 
-The demo bot **Field & Flower** is a neighborhood flower shop: callers order a bouquet for delivery while the bot looks up the catalog, captures delivery details, and places the order. All backend calls are mocked, so the starter runs with nothing but AI service keys.
+## What's in the CRM
 
-## Version 1 — GPT-4.1
+| | |
+|---|---|
+| **Dashboard** — portfolio KPIs (outstanding, promise-to-pay rate, recovery, **100% compliance**), aging, an "accounts to call next" queue, and a live activity feed. | <img src="docs/screenshots/dashboard.png" width="420"/> |
+| **Accounts** — a sortable, filterable debtor book with status & risk pills and one-click calling. | <img src="docs/screenshots/accounts.png" width="420"/> |
+| **Account record** — record header, action bar (**Call now**, log PTP, mark disputed, honor cease), tabbed Activity / Details / Script / Compliance, and a right **side-panel** with full customer context + "what happened" history. | <img src="docs/screenshots/record.png" width="420"/> |
+| **Live call console** — dial → ring → connected, a streaming transcript, a **real-time FDCPA compliance checklist**, a script-step tracker, and automatic outcome capture. | <img src="docs/screenshots/call-2.png" width="420"/> |
+| **Compliance Lab** — Cekura's *simulate → evaluate → auto-improve* loop: the 62% → 100% climb, 8 adversarial personas, and Claude's per-iteration prompt fixes. | <img src="docs/screenshots/compliance-lab.png" width="420"/> |
 
-You can start with this before the hackathon, if you want to. Or test GPT-4.1 and Nemotron side-by-side during the hackathon, using Cekura.
-
-This bot only requires a Gradium API key and an OpenAI API key. Sign up for free at [Gradium](https://gradium.ai). We'll provide a code for Gradium credits, during the event.
-
-- **STT:** [Gradium](https://gradium.ai)
-- **LLM:** [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses) (GPT-4.1)
-- **TTS:** [Gradium](https://gradium.ai)
-- **Transports:** SmallWebRTC (local dev) and [Twilio](https://www.twilio.com/en-us) (production telephony)
-- **Deploy target:** [Pipecat Cloud](https://pipecat.daily.co)
-
-## Version 2
-
-NVIDIA models hosted on AWS, available during the hackathon.
+## The self-improvement loop (the centerpiece)
 
 ```
-  export NVIDIA_ASR_URL=ws://44.241.251.184:8080
-  export NEMOTRON_LLM_URL=http://nemotron-fleet-alb-1322439314.us-west-2.elb.amazonaws.com/v1
-  export NEMOTRON_LLM_MODEL=nvidia/nemotron-3-super
-  ```
+                       ┌──────────────────── Pipecat pipeline ────────────────────┐
+ Debtor ☎ ⇄ Twilio  ⇄ │ Nemotron ASR → Nemotron-3-Super LLM → Magpie/Gradium TTS │
+                       └───────────────────────────┬──────────────────────────────┘
+                                                    │  outcome + transcript
+                                                    ▼
+        ┌──────────────── Cekura auto-improvement harness ───────────────┐
+        │ debtor personas → place calls → grade (compliance + recovery)   │
+        │      ▼ failures → Claude edits system prompt → redeploy → re-run │
+        └────────────────────────  until 100% compliant  ────────────────┘
+```
 
-- **STT:** [Nemotron Speech Streaming](https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b)
-- **LLM:** [Nemotron 3 Super 120B](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16)
-- **TTS:** [Gradium](https://gradium.ai)
-- **Transports:** SmallWebRTC (local dev) and Twilio (production telephony)
-- **Deploy target:** [Pipecat Cloud](https://pipecat.daily.co)
+Cekura runs adversarial debtor personas (wrong party, angry, disputes, "stop calling me", hardship,
+identity refusal, voicemail…) against the agent, grades every call on **compliance + effectiveness**
+metrics, and Claude rewrites the agent's prompt and redeploys until the suite hits **100% compliance**
+and a higher promise-to-pay rate. The Compliance Lab visualizes that climb — **62% → 78% → 94% → 100%**
+across 3 auto-iterations, **0 human edits**.
 
-## Develop locally
+## Compliance, enforced (not hoped for)
 
-Get the bot running over WebRTC in your browser before you push to the cloud or wire up the phone, for a faster iteration loop.
+The agent's hard rules map 1:1 to the FDCPA and are verified continuously by Cekura:
 
-### Prerequisites
+- **Right-party contact** before any disclosure (§1692b) · **Mini-Miranda** (§1692e(11))
+- **Accurate balance** (§1692e(2)) · **No harassment / threats** (§1692d)
+- **No third-party disclosure** (§1692c(b)) · **Honor cease-communication** (§1692c(c))
 
-- Python 3.11+
-- [`uv`](https://docs.astral.sh/uv/getting-started/installation/) package manager
-- API keys for [OpenAI](https://platform.openai.com) and [Gradium](https://gradium.ai)
+## Tech stack
 
-### Setup
+- **Voice:** NVIDIA Nemotron Speech Streaming (ASR) + Nemotron-3-Super-120B (LLM) + Magpie/Gradium (TTS), orchestrated by **Pipecat**, over **Twilio** PSTN, deployable to **Pipecat Cloud**.
+- **Eval / improve:** **Cekura** simulate → evaluate → auto-improve.
+- **CRM:** **Next.js 16** (App Router) · React 19 · Tailwind CSS v4 · TypeScript · framer-motion · lucide-react, deployed on **Vercel**.
 
-1. **Clone and enter the server directory:**
+## Repo structure
 
-   ```bash
-   git clone https://github.com/pipecat-ai/yc-voice-agents-hackathon.git
-   cd yc-voice-agents-hackathon/server
-   ```
+```
+.
+├── web/                 # Recoup AI CRM (Next.js, deployed to Vercel) — see web/README.md
+├── server/              # Pipecat voice agent (bot-nemotron.py, mock_backend.py)
+├── PRD.md               # Product spec
+├── docs/STARTER.md      # Original hackathon starter instructions
+└── docs/screenshots/    # UI screenshots
+```
 
-2. **Configure API keys:**
+## Run it
 
-   ```bash
-   cp .env.example .env
-   # Edit .env and fill in OPENAI_API_KEY, GRADIUM_API_KEY.
-   # TWILIO_* keys are only needed when you wire up the phone (next section).
-   ```
-
-3. **Install dependencies:**
-
-   ```bash
-   uv sync
-   ```
-
-4. **Run the bot:**
-
-   ```bash
-   # run one or the other of these
-   uv run bot-gpt.py
-   uv run bot-nemotron.py
-   ```
-
-   Open [http://localhost:7860](http://localhost:7860) and click **Connect** to start talking. First launch takes ~20s while Pipecat downloads VAD and turn-detection models.
-
-## Deploy to Pipecat Cloud
-
-Once the bot works locally, deploy to Pipecat Cloud and connect it to a Twilio phone number so anyone can call in.
-
-### Prerequisites
-
-1. [Sign up for Pipecat Cloud](https://pipecat.daily.co/sign-up)
-2. Install the [Pipecat CLI](https://github.com/pipecat-ai/pipecat-cli) and log in:
-
-   ```bash
-   uv tool install pipecat-ai-cli
-   pc cloud auth login
-   ```
-
-### Configure Twilio
-
-1. [Add credits / upgrade your Twilio account](https://twil.io/yc-hack)
-
-2. [Buy a phone number](https://help.twilio.com/articles/223135247) with voice capability.
-
-3. Get your Pipecat Cloud organization name:
-
-   ```bash
-   pc cloud organizations list
-   ```
-
-4. [Create a TwiML Bin](https://www.twilio.com/docs/serverless/twiml-bins/getting-started#create-a-new-twiml-bin) with this configuration:
-
-   ```xml
-   <?xml version="1.0" encoding="UTF-8"?>
-   <Response>
-     <Connect>
-       <Stream url="wss://api.pipecat.daily.co/ws/twilio">
-         <Parameter name="_pipecatCloudServiceHost"
-           value="flower-bot.YOUR_ORG_NAME"/>
-       </Stream>
-     </Connect>
-   </Response>
-   ```
-
-   Replace `YOUR_ORG_NAME` with the org name from step 2.
-
-5. [Attach the TwiML Bin](https://www.twilio.com/docs/serverless/twiml-bins/getting-started#wire-your-twiml-bin-up-to-an-incoming-phone-call) to your Twilio number: Go to [your phone numbers](https://console.twilio.com/go?to=/account/__account__/us1/senders-hub/list/phone-numbers/inventory) → select your
-number → under **Voice Configuration**, set method to the **TwiML Bin** you created → Save.
-
-6. [Optional] Use [Twilio Dev phone](https://www.twilio.com/docs/labs/dev-phone) for testing.
-
-### Review the deployment configuration
-
-Your deployment details are specified in the `pcc-deploy.toml` file. You can learn more about options in the [docs](https://docs.pipecat.ai/api-reference/cli/cloud/deploy#configuration-file-pcc-deploy-toml).
-
-### Upload secrets
-
+**CRM (web):**
 ```bash
-pc cloud secrets set flower-bot-secrets --file .env
+cd web && npm install && npm run dev      # http://localhost:3000
 ```
+Runs as a self-contained demo with no env vars. See [`web/README.md`](web/README.md) to wire real
+telephony (Twilio → Pipecat) and live Cekura mode.
 
-This uploads everything from `.env` to Pipecat Cloud's secure storage. The bot reads from there at runtime, so you don't bake keys into the image.
-
-### Deploy
-
-Build and run your bot on Pipecat Cloud:
-
+**Voice agent (server):**
 ```bash
-pc cloud deploy
+cd server && uv sync && uv run bot-nemotron.py    # then open http://localhost:7860
 ```
+Full Twilio + Pipecat Cloud + Cekura setup in [`docs/STARTER.md`](docs/STARTER.md).
 
-Learn more about [cloud builds](https://docs.pipecat.ai/pipecat-cloud/guides/cloud-builds).
+## Deploy
 
-### Call your bot
+The CRM is deployed on **Vercel** (project root directory `web/`). The voice agent deploys to
+**Pipecat Cloud** (`server/pcc-deploy.toml`).
 
-Dial the Twilio number you set up. 🌷
+---
 
-## Test your agent with Cekura
+<div align="center">
 
-[Cekura](https://cekura.com) tests and observes voice agents. For this hackathon, use it to **test the Pipecat bot you build in this repo** — run real conversations against it, score the transcripts, and fix what's failing before you demo.
+Built on the [YC Voice Agents Hackathon starter](docs/STARTER.md) (Pipecat + NVIDIA Nemotron).
+Evaluation & auto-improvement by [Cekura](https://cekura.com).
 
-### Sign up
-
-Create your account at **[dashboard.cekura.ai](https://dashboard.cekura.ai)**. If you're approved for this hackathon, just sign up and your credits will show up automatically. If you don't see them, find someone from the Cekura team, they're on-site.
-
-### Onboarding (or skip it)
-
-On first login you'll land on a short setup flow that helps you create your first agent and test. Feel free to click through it — **or hit _Skip_** and jump straight to the dashboard if you'd rather set things up yourself. Either way takes a minute.
-
-### Recommended: start by testing your agent (via Claude Code)
-
-The fastest path — and what we recommend for the hackathon — is to drive Cekura from **Claude Code** using our MCP server + skills. You stay in your terminal, and Cekura handles agent creation, scenario generation, and running the test.
-
-**1. Install the Cekura skills + MCP** (Claude Code marketplace plugin — bundles the skills, slash commands, and auto-configured MCP server):
-
-```bash
-/plugin marketplace add cekura-ai/cekura-skills
-/plugin install cekura@cekura-skills
-```
-
-Repo: [github.com/cekura-ai/cekura-skills](https://github.com/cekura-ai/cekura-skills) · Full setup + other agents (Cursor, Codex, etc.): **[docs.cekura.ai → Claude Code guide](https://docs.cekura.ai/mcp/claude-code-guide)** and **[Skills](https://docs.cekura.ai/mcp/skills)**.
-
-**2. Run an end-to-end test** of your agent with a single command:
-
-```
-/cekura-report
-```
-
-This spins up anything from 10–20 evaluators (what Cekura calls test cases), runs scenarios against your Pipecat agent, and gives you back a full report — transcripts, scores, and what failed — so you can iterate fast.
-
-> When connecting your agent, **select `Pipecat` as the provider.** Details: [docs.cekura.ai → Pipecat](https://docs.cekura.ai/documentation/integrations/pipecat/automated).
-
-## Learn more
-
-### Pipecat
-
-- [Pipecat Documentation](https://docs.pipecat.ai/)
-- [Pipecat Cloud Deployment](https://docs.pipecat.ai/pipecat-cloud/introduction)
-- [Pipecat Examples](https://github.com/pipecat-ai/pipecat-examples)
-- [Pipecat Discord](https://discord.gg/pipecat)
-
-### Twilio
-
-- [Twilio Developer Hub](https://www.twilio.com/en-us/developers)
-- [Twilio Documentation](https://www.twilio.com/docs)
-- [Twilio Dev phone](https://www.twilio.com/docs/labs/dev-phone)
-
-### Cekura
-
-- [Claude Code guide](https://docs.cekura.ai/mcp/claude-code-guide) — MCP + skills setup
-- [Cekura skills](https://docs.cekura.ai/mcp/skills) — all slash commands
-- [Pipecat integration](https://docs.cekura.ai/documentation/integrations/pipecat/automated)
-- [Cekura docs](https://docs.cekura.ai) · [dashboard](https://dashboard.cekura.ai)
+</div>
