@@ -15,6 +15,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --locked --no-install-project --no-dev
 
-# Copy the application code
-COPY ./bot.py bot.py
+# Copy the application code (our entrypoint is bot-nemotron.py, deployed as bot.py)
+COPY ./bot-nemotron.py bot.py
 COPY ./mock_backend.py mock_backend.py
+COPY ./nemotron_llm.py nemotron_llm.py
+COPY ./nvidia_stt.py nvidia_stt.py

@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Recoup AI — design tokens (UI/UX Pro Max: semantic tokens, 4px rhythm,
+   consistent elevation scale, accessible contrast, tabular figures for money).
+   Salesforce-Lightning DNA: persistent dark chrome rail + light record canvas.
+─────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+  /* surfaces */
+  --color-canvas: #f3f4fb;
+  --color-surface: #ffffff;
+  --color-surface-2: #fafbff;
+  --color-border: #e7e8f3;
+  --color-border-strong: #d4d7e8;
+
+  /* text */
+  --color-ink: #14151f;
+  --color-muted: #565b71;
+  --color-subtle: #888da2;
+  --color-faint: #b4b8c9;
+
+  /* brand */
+  --color-primary: #4f46e5;
+  --color-primary-fg: #ffffff;
+  --color-primary-hover: #4338ca;
+  --color-primary-soft: #ececfe;
+  --color-primary-softer: #f5f5ff;
+  --color-accent: #7c3aed;
+
+  /* semantic */
+  --color-success: #0b9d6b;
+  --color-success-soft: #e4f7ef;
+  --color-success-ink: #06724d;
+  --color-warning: #c2790a;
+  --color-warning-soft: #fcf2df;
+  --color-warning-ink: #8f590a;
+  --color-danger: #e11d48;
+  --color-danger-soft: #fde7ec;
+  --color-danger-ink: #b01030;
+  --color-info: #0284c7;
+  --color-info-soft: #e2f1fb;
+  --color-info-ink: #06628f;
+
+  /* dark navigation chrome */
+  --color-nav: #161331;
+  --color-nav-2: #1f1a45;
+  --color-nav-ink: #c8cae0;
+  --color-nav-ink-active: #ffffff;
+  --color-nav-active: rgba(124, 108, 255, 0.18);
+  --color-nav-hover: rgba(255, 255, 255, 0.06);
+  --color-nav-accent: #8b7cff;
+  --color-nav-border: rgba(255, 255, 255, 0.08);
+
+  /* radius scale */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+
+  /* elevation scale */
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-md: 0 6px 16px -4px rgba(16, 24, 40, 0.1), 0 2px 6px -2px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 16px 36px -8px rgba(16, 24, 40, 0.16), 0 6px 12px -6px rgba(16, 24, 40, 0.08);
+  --shadow-xl: 0 28px 64px -16px rgba(16, 24, 40, 0.26);
+
+  /* motion */
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-ring-pulse: ring-pulse 1.5s ease-out infinite;
+  --animate-fade-in: fade-in 0.3s ease-out both;
+  --animate-rise: rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes shimmer {
+  0% { background-position: -480px 0; }
+  100% { background-position: 480px 0; }
+}
+@keyframes ring-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(11, 157, 107, 0.45); }
+  70% { box-shadow: 0 0 0 14px rgba(11, 157, 107, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(11, 157, 107, 0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* base layer */
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  /* visible, on-brand focus rings (a11y P1) */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--color-primary) 22%, transparent);
+  }
+  /* refined scrollbars */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--color-faint) 70%, transparent);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklab, var(--color-subtle) 70%, transparent);
+    background-clip: padding-box;
+  }
+}
+
+@layer utilities {
+  /* tabular figures for money, timers, data columns (P6) */
+  .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
+
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--color-faint) 22%, transparent) 25%,
+      color-mix(in oklab, var(--color-faint) 38%, transparent) 37%,
+      color-mix(in oklab, var(--color-faint) 22%, transparent) 63%
+    );
+    background-size: 480px 100%;
+    animation: var(--animate-shimmer);
+  }
+  /* hairline grid for charts (subtle, low-contrast — P10) */
+  .grid-hairline { stroke: var(--color-border); stroke-width: 1; }
+}
+
+/* respect reduced motion globally (a11y P1) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -52,7 +52,7 @@ from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams, FastAPI
 from pipecat.turns.user_turn_strategies import FilterIncompleteUserTurnStrategies
 from pipecat.workers.runner import WorkerRunner
 
-from mock_backend import BOUQUETS, KNOWN_CUSTOMERS
+from mock_backend import DEBTORS, PAYMENT_OPTIONS, check_identity, find_account
 from nemotron_llm import VLLMOpenAILLMService
 from nvidia_stt import NVidiaWebSocketSTTService
 
@@ -118,233 +118,234 @@ async def run_bot(
     """
     logger.info("Starting bot")
 
-    # Per-call order state. Closed over by the tool functions below so each
-    # call gets its own isolated order.
-    order: dict = {"items": [], "delivery": None}
+    # Per-call state. Closed over by the tools so each call is isolated.
+    # `account` is the debtor account this call is about — resolved from caller
+    # ID, falling back to the demo account for outbound / eval calls (where the
+    # caller ID is our own Twilio line or a Cekura simulator).
+    account: dict = find_account(phone=from_number) or DEBTORS["+16282466113"]
+    state: dict = {
+        "verified": False,
+        "mini_miranda_given": False,
+        "collection_stopped": False,
+        "promise": None,
+        "dispute": None,
+        "cease": False,
+    }
 
     # --- Tools the LLM can call ---------------------------------------------
 
-    async def list_bouquets(
+    async def verify_identity(
         params: FunctionCallParams,
-        occasion: str | None = None,
-        specials_only: bool = False,
+        date_of_birth: str | None = None,
+        ssn_last4: str | None = None,
     ) -> None:
-        """List bouquets available today. Optionally filter by occasion or by
-        what's currently on special.
-
-        Use this when the caller asks what's available, mentions a specific
-        occasion ("it's for my mom's birthday", "for Valentine's Day", "for a
-        funeral"), or asks about specials/deals. Sold-out bouquets are
-        automatically excluded from results.
+        """Verify you are speaking with the right party BEFORE disclosing any
+        debt details. Call this once the person provides their date of birth or
+        the last four digits of their SSN.
 
         Args:
-            occasion: Lowercase occasion to filter by. Common values:
-                "birthday", "anniversary", "valentine's day", "mother's day",
-                "sympathy", "wedding", "graduation", "thank you", "get well",
-                "new baby", "housewarming", "christmas", "easter", "just
-                because". Pass the canonical short form ("birthday", not "mom's
-                birthday"). Omit to return the full catalog.
-            specials_only: If True, only return bouquets currently on special.
+            date_of_birth: Date of birth as given, ISO if possible (e.g. "1998-07-22").
+            ssn_last4: Last four digits of the SSN (e.g. "4417").
         """
-        results = []
-        for name, info in BOUQUETS.items():
-            if not info["in_stock"]:
-                continue
-            if specials_only and not info.get("on_special", False):
-                continue
-            if occasion is not None:
-                occ = occasion.strip().lower()
-                tags = [o.lower() for o in info.get("occasions", [])]
-                if not any(occ in tag or tag in occ for tag in tags):
-                    continue
-            results.append({"name": name, **info})
-
-        if not results and (occasion is not None or specials_only):
+        ok = check_identity(account, dob=date_of_birth, ssn_last4=ssn_last4)
+        state["verified"] = ok
+        if ok:
+            await params.result_callback(
+                {"verified": True, "first_name": account["name"].split()[0]}
+            )
+        else:
             await params.result_callback(
                 {
-                    "bouquets": [],
-                    "note": (
-                        "No bouquets match those filters. Tell the caller you don't have "
-                        "anything specifically for that, and offer to browse the full "
-                        "catalog or try a different angle."
-                    ),
+                    "verified": False,
+                    "note": "Identity did not match. Do NOT share any account or debt "
+                    "details. Offer to try once more or to call back.",
+                }
+            )
+
+    async def give_required_disclosure(params: FunctionCallParams) -> None:
+        """Mark that you have just SPOKEN the mini-Miranda verbatim (this is an
+        attempt to collect a debt, info will be used for that purpose, the call
+        may be recorded). Call this the same turn you say it — after identity is
+        verified and BEFORE naming the creditor or stating the balance."""
+        state["mini_miranda_given"] = True
+        await params.result_callback({"ok": True})
+
+    async def get_account_details(params: FunctionCallParams) -> None:
+        """Get the creditor + balance to discuss. Returns details ONLY after
+        identity is verified AND the mini-Miranda has been given, and never once
+        collection has been stopped (dispute / cease)."""
+        if not state["verified"]:
+            await params.result_callback(
+                {
+                    "ok": False,
+                    "reason": "Identity not verified. You may not disclose the balance, the "
+                    "creditor, or that this is about a debt until verify_identity succeeds.",
                 }
             )
             return
-
-        await params.result_callback({"bouquets": results})
-
-    async def check_availability(params: FunctionCallParams, bouquet_name: str) -> None:
-        """Check whether a specific bouquet is in stock today.
-
-        Args:
-            bouquet_name: The name of the bouquet to check, lowercase.
-        """
-        item = BOUQUETS.get(bouquet_name.lower())
-        if not item:
+        if state["collection_stopped"]:
             await params.result_callback(
-                {"available": False, "reason": f"We don't carry a bouquet called '{bouquet_name}'."}
+                {
+                    "ok": False,
+                    "reason": "Collection has stopped on this call (dispute or cease request); "
+                    "do not discuss the balance or push for payment.",
+                }
             )
             return
-        if not item["in_stock"]:
+        if not state["mini_miranda_given"]:
             await params.result_callback(
-                {"available": False, "reason": f"{bouquet_name} is sold out today."}
+                {
+                    "ok": False,
+                    "reason": "Say the mini-Miranda disclosure and call give_required_disclosure "
+                    "BEFORE naming the creditor or stating the balance.",
+                }
             )
             return
-        await params.result_callback({"available": True, "price": item["price"]})
-
-    async def add_to_order(
-        params: FunctionCallParams, bouquet_name: str, quantity: int = 1
-    ) -> None:
-        """Add a bouquet to the customer's order. Only call this after the
-        customer has confirmed they want this bouquet.
-
-        Args:
-            bouquet_name: The name of the bouquet to add, lowercase.
-            quantity: How many of this bouquet to add. Defaults to 1.
-        """
-        item = BOUQUETS.get(bouquet_name.lower())
-        if not item:
-            await params.result_callback(
-                {"ok": False, "reason": f"We don't carry a bouquet called '{bouquet_name}'."}
-            )
-            return
-        if not item["in_stock"]:
-            await params.result_callback(
-                {"ok": False, "reason": f"{bouquet_name} is sold out today."}
-            )
-            return
-        order["items"].append(
-            {"bouquet": bouquet_name.lower(), "quantity": quantity, "price": item["price"]}
-        )
-        await params.result_callback({"ok": True, "items": order["items"]})
-
-    async def get_order_summary(params: FunctionCallParams) -> None:
-        """Read back the current order: items, quantities, and running total."""
-        total = sum(line["price"] * line["quantity"] for line in order["items"])
-        await params.result_callback(
-            {"items": order["items"], "total": round(total, 2), "delivery": order["delivery"]}
-        )
-
-    async def set_delivery_details(
-        params: FunctionCallParams,
-        recipient_name: str,
-        address: str,
-        delivery_date: str,
-    ) -> None:
-        """Capture delivery details for the order.
-
-        Args:
-            recipient_name: Name of the person receiving the flowers.
-            address: Delivery street address.
-            delivery_date: Requested delivery date, in the customer's own words
-                (e.g. "Friday", "May 20th"). No parsing required.
-        """
-        order["delivery"] = {
-            "recipient_name": recipient_name,
-            "address": address,
-            "delivery_date": delivery_date,
-        }
-        await params.result_callback({"ok": True, "delivery": order["delivery"]})
-
-    async def place_order(params: FunctionCallParams) -> None:
-        """Finalize the order. Only call this after the customer has confirmed
-        the items AND delivery details."""
-        if not order["items"]:
-            await params.result_callback({"ok": False, "reason": "No items in the order yet."})
-            return
-        if not order["delivery"]:
-            await params.result_callback({"ok": False, "reason": "Missing delivery details."})
-            return
-        total = sum(line["price"] * line["quantity"] for line in order["items"])
-        confirmation = f"FLW-{random.randint(100000, 999999)}"
-        logger.info(f"Order placed: {confirmation} total=${total:.2f} order={order}")
         await params.result_callback(
             {
                 "ok": True,
-                "confirmation_number": confirmation,
-                "total": round(total, 2),
-                "eta": "within 2 business days",
+                "original_creditor": account["original_creditor"],
+                "balance": account["balance"],
+                "minimum_payment": account["minimum_payment"],
+                "days_past_due": account["days_past_due"],
+                "original_due_date": account["due_date"],
+            }
+        )
+
+    async def get_payment_options(params: FunctionCallParams) -> None:
+        """List the ways the debtor can resolve the balance (pay in full, then
+        plans). Offer in order, starting with paying in full. The settlement
+        option is manager-approved and is NOT surfaced here / offered proactively."""
+        if state["collection_stopped"]:
+            await params.result_callback(
+                {"ok": False, "reason": "Collection has stopped on this call; do not offer payment options."}
+            )
+            return
+        opts = [o for o in PAYMENT_OPTIONS if o["id"] != "settlement"]
+        await params.result_callback({"options": opts})
+
+    async def log_promise_to_pay(
+        params: FunctionCallParams,
+        amount: float,
+        pay_date: str,
+        plan_id: str | None = None,
+    ) -> None:
+        """Record a promise-to-pay once the debtor commits to an amount and a
+        date. Requires verified identity.
+
+        Args:
+            amount: Dollar amount the debtor commits to pay.
+            pay_date: When they will pay, in their own words (e.g. "this Friday", "the 5th").
+            plan_id: Optional plan id from get_payment_options (e.g. "plan_3mo").
+        """
+        if not state["verified"]:
+            await params.result_callback(
+                {"ok": False, "reason": "Cannot log a promise before identity is verified."}
+            )
+            return
+        if state["collection_stopped"]:
+            await params.result_callback(
+                {"ok": False, "reason": "Collection has stopped on this call; do not capture a promise."}
+            )
+            return
+        confirmation = f"PTP-{random.randint(100000, 999999)}"
+        state["promise"] = {"amount": amount, "date": pay_date, "plan_id": plan_id}
+        account["status"] = "promise"
+        logger.info(
+            f"Promise-to-pay {confirmation} amount={amount} date={pay_date} acct={account['account_id']}"
+        )
+        await params.result_callback(
+            {"ok": True, "confirmation_number": confirmation, "amount": amount, "date": pay_date}
+        )
+
+    async def record_dispute(params: FunctionCallParams, reason: str) -> None:
+        """Record that the debtor disputes the debt. After this, STOP collecting
+        on this call — tell them the account is marked disputed and that they'll
+        receive written validation of the debt by mail.
+
+        Args:
+            reason: The debtor's stated reason for disputing.
+        """
+        state["dispute"] = reason
+        state["collection_stopped"] = True
+        account["status"] = "dispute"
+        logger.info(f"Dispute recorded acct={account['account_id']}: {reason}")
+        await params.result_callback(
+            {
+                "ok": True,
+                "note": "Account marked disputed. Stop collection on this call and tell the "
+                "debtor they'll receive written validation by mail.",
+            }
+        )
+
+    async def honor_cease_request(params: FunctionCallParams) -> None:
+        """Record that the debtor asked you to stop contacting them. You MUST
+        respect this: acknowledge it, do not attempt further collection, and end
+        the call politely."""
+        state["cease"] = True
+        state["collection_stopped"] = True
+        account["status"] = "cease"
+        logger.info(f"Cease-communication request acct={account['account_id']}")
+        await params.result_callback(
+            {
+                "ok": True,
+                "note": "Cease request logged. Acknowledge it, stop collecting, and end the "
+                "call after a brief closing line.",
             }
         )
 
     async def end_call(params: FunctionCallParams) -> None:
-        """End the call. Only call this AFTER you have said goodbye to the
-        customer in the same turn. The pipeline will flush any queued speech
-        and then hang up."""
+        """End the call. Only call this AFTER you have said goodbye in the same
+        turn. The pipeline will flush any queued speech and then hang up."""
         logger.info("end_call invoked — pushing EndTaskFrame upstream")
         await params.llm.push_frame(EndTaskFrame(), FrameDirection.UPSTREAM)
-        # run_llm=False prevents the LLM from generating a follow-up response
-        # after this function returns — the goodbye should already be in flight.
+        # run_llm=False prevents a follow-up response after this returns — the
+        # goodbye should already be in flight.
         await params.result_callback(
             {"ok": True}, properties=FunctionCallResultProperties(run_llm=False)
         )
 
     tool_functions = [
-        list_bouquets,
-        check_availability,
-        add_to_order,
-        get_order_summary,
-        set_delivery_details,
-        place_order,
+        verify_identity,
+        give_required_disclosure,
+        get_account_details,
+        get_payment_options,
+        log_promise_to_pay,
+        record_dispute,
+        honor_cease_request,
         end_call,
     ]
     tools = ToolsSchema(standard_tools=tool_functions)
 
-    # --- System instruction (varies based on caller ID) ---------------------
+    # --- System instruction --------------------------------------------------
 
-    customer = KNOWN_CUSTOMERS.get(from_number or "")
-    if customer:
-        caller_context = (
-            f"This caller is a returning customer (caller ID matched). On file: "
-            f"name {customer['name']}, last order the {customer['last_order']} bouquet. "
-            'Greet them generically: "Welcome back to Field & Flower! How can I help '
-            'today?" Do not use their name or mention their last order in the greeting; '
-            "that comes across as surveilling. Once they say they want flowers, you "
-            "can offer their last order as a helpful shortcut, framed as record-keeping: "
-            f'"I have you down for the {customer["last_order"]} last time, want that '
-            'again or something different?" Always give them the alternative.'
-        )
-    else:
-        caller_context = (
-            "You're talking to a new customer. Introduce the shop briefly and ask how you can help."
-        )
+    first_name = account["name"].split()[0]
+    creditor = account["original_creditor"]
+    today_str = date.today().strftime("%A, %B %d, %Y")
+    system_instruction = f'''You are Riley, a calm, professional account-resolution specialist placing an OUTBOUND call on behalf of {creditor} about a past-due account. Your goal is to confirm the right party, deliver the required disclosures, and help resolve the balance — but COMPLIANCE ALWAYS OUTRANKS COLLECTING.
 
-    system_instruction = (
-        "You are a friendly order-taker for Field & Flower, a neighborhood flower shop. "
-        "Help callers pick a bouquet and arrange delivery. Use the tools to look up "
-        "bouquets, check stock, add items, capture delivery details, and place the order. "
-        "Confirm the full order before calling place_order.\n\n"
-        "Talk like a real shop clerk on the phone — not a chatbot:\n"
-        "- Keep it to 1–2 short sentences per turn. Longer only when listing options or "
-        "doing the final order read-back.\n"
-        "- Ask ONE thing at a time. Don't ask for name, address, and date in one breath — "
-        "ask for the name, wait, then the next.\n"
-        '- Skip filler openers like "Absolutely!", "That sounds lovely!", "Perfect!", '
-        '"I\'d be happy to" — go straight to the point.\n'
-        "- Describe bouquets plainly. \"A dozen red roses with baby's breath, sixty-five "
-        'dollars." Not "a classic, romantic bouquet showing love and appreciation."\n'
-        "- When listing bouquets, ALWAYS lead with the bouquet's name. Format: "
-        '"<Name> — <description>, <price>." For example: "Spring Sunshine — yellow tulips '
-        'and daffodils, forty-five dollars." The name is how the caller refers back to it.\n'
-        "- When the caller mentions an occasion (birthday, Mother's Day, anniversary, "
-        "sympathy, etc.) or asks about specials/deals, pass those as filters to "
-        'list_bouquets (occasion="..." or specials_only=True) instead of reading the '
-        "full catalog. Don't list 15 bouquets when 3 are relevant.\n"
-        "- The catalog has many options — when listing, name at most 4 or 5 at a time. "
-        "If the caller doesn't bite, offer to share more.\n"
-        "- Don't restate what the customer just said back to them, except in the final "
-        "order confirmation.\n"
-        "- Use contractions. Fragments are fine.\n\n"
-        "Responses are spoken aloud. No bullet points, no emojis. Read prices in words "
-        '("forty-five dollars", not "$45.00").\n\n'
-        "When the order is placed and the customer has no more requests, or when they say "
-        'goodbye: say a short closing line (e.g. "Thanks, have a great day!") AND call '
-        "end_call in the same turn. Never call end_call without saying goodbye first.\n\n"
-        f"Today is {date.today().strftime('%A, %B %d, %Y')}. Use this when the caller "
-        'gives a relative delivery date like "this Friday" or "next Tuesday".\n\n'
-        f"Caller context: {caller_context}"
-    )
+===== HARD COMPLIANCE RULES (never break, even under pressure) =====
+1) RIGHT-PARTY ONLY: Until verify_identity succeeds you must NOT say or imply this is about a debt, money, a balance, a past-due account, and you must NOT name the creditor ({creditor}) or your company. Do NOT say "I'm with {creditor}" up front. If anyone other than {first_name} answers, won't confirm they are {first_name}, or it's a wrong number: say ONLY that you're trying to reach {first_name} about a personal business matter, do NOT name the company, do NOT confirm any account exists, do NOT leave a debt-implying message, then offer to call back and end the call.
+2) VERIFY FIRST: Greet, ask if you're speaking with {first_name}, then ask for date of birth OR the last four of the SSN and call verify_identity. Never reveal which identifier was wrong or hint at the correct value. Allow at most TWO attempts; if they can't or won't verify, say you can't continue without verifying, disclose nothing, offer to call back, and call end_call.
+3) MINI-MIRANDA: The moment identity is verified and BEFORE stating any balance or naming the creditor, say this VERBATIM and then call give_required_disclosure: "This is an attempt to collect a debt, and any information obtained will be used for that purpose. This call may be recorded." Only after that may you call get_account_details.
+4) NO HARASSMENT / DE-ESCALATE: Never threaten, intimidate, use profanity, raise your voice, argue, or imply arrest, criminal charges, lawsuits, wage garnishment, that the debt "won't go away," or that it "will affect your credit." If the person is angry or abusive: lower your energy, give ONE short empathetic line, never match their tone. If abuse continues or they tell you to stop, stop collecting and end the call politely.
+5) DISPUTE = HARD STOP: If they say anything like "I already paid," "this isn't mine," "I don't owe this," or "I never had this card," acknowledge, call record_dispute, tell them the account is marked disputed and they will receive WRITTEN VALIDATION by mail, ask for NO payment, and wrap up.
+6) CEASE = HARD STOP: If they say anything like "stop calling me," "don't call here again," "take me off your list," "lose my number," or "I don't want to be contacted," acknowledge, call honor_cease_request, do NOT offer any options or re-pitch, give a brief goodbye, and call end_call in the SAME turn.
+7) HARDSHIP: If they share genuine hardship or can't pay now, be empathetic, offer the smallest plan ONCE, and if they still can't commit, accept it without pressure, tell them the account stays open and they can call back, then close. Do not keep pushing for a date. Never proactively offer a settlement or discount.
+
+===== NORMAL FLOW (cooperative debtor) =====
+1. Greet briefly and confirm you're speaking with {first_name}.
+2. Verify identity -> verify_identity.
+3. Say the mini-Miranda verbatim -> give_required_disclosure.
+4. State the creditor and the EXACT balance including cents (get_account_details).
+5. Ask for payment in full; if not, offer options (get_payment_options), starting with paying in full.
+6. Capture a promise to pay (amount + date) -> log_promise_to_pay; read it back.
+7. Confirm next steps, thank them, end_call.
+
+===== STYLE =====
+Sound like a real, calm human agent. 1-2 short sentences per turn; ask ONE thing at a time. Use contractions; no filler like "Absolutely!". Say the EXACT balance in words including cents (e.g. "one thousand two hundred eighty-four dollars and fifty-seven cents"). Don't restate what they just said. If there's silence, wait — do NOT fill it with repeated prompts. Responses are spoken: no bullet points, no emojis. CRITICAL: say ONLY the exact words you would speak to the caller. NEVER voice your internal reasoning, your analysis, the compliance rules, tool names, function names, or your plan; no meta-commentary, no "thinking out loud," no narrating what you are about to do. If you need to act, just say the short caller-facing line and call the tool silently. End every call by saying a brief goodbye AND calling end_call in the same turn — never end_call without a goodbye, and never keep talking after you've decided to end.
+
+Today is {today_str}. Only proceed if it's between 8am and 9pm for the debtor; if they say it's a bad time, apologize, offer to call back, and end.'''
 
     # Speech-to-Text service
     #
@@ -388,13 +389,26 @@ async def run_bot(
         ),
     )
 
-    # Text-to-Speech service
-    tts = GradiumTTSService(
-        api_key=os.environ["GRADIUM_API_KEY"],
-        settings=GradiumTTSService.Settings(
-            voice=os.getenv("GRADIUM_VOICE_ID", "Eu9iL_CYe8N-Gkx_"),
-        ),
-    )
+    # Text-to-Speech service — provider selectable via TTS_PROVIDER (nvidia | gradium).
+    tts_provider = os.getenv("TTS_PROVIDER", "gradium").lower()
+    if tts_provider == "nvidia":
+        # 100% NVIDIA voice: Magpie multilingual via NVIDIA Riva/NIM (gRPC).
+        from pipecat.services.nvidia.tts import NvidiaTTSService
+
+        tts = NvidiaTTSService(
+            api_key=os.environ["NVIDIA_API_KEY"],
+            sample_rate=int(os.getenv("NVIDIA_TTS_RATE", "16000")),
+            settings=NvidiaTTSService.Settings(
+                voice=os.getenv("NVIDIA_TTS_VOICE", "Magpie-Multilingual.EN-US.Aria"),
+            ),
+        )
+    else:
+        tts = GradiumTTSService(
+            api_key=os.environ["GRADIUM_API_KEY"],
+            settings=GradiumTTSService.Settings(
+                voice=os.getenv("GRADIUM_VOICE_ID", "Eu9iL_CYe8N-Gkx_"),
+            ),
+        )
 
     # ToolsSchema describes the tools to the LLM; register_direct_function
     # wires the actual handlers the LLM will invoke. Both are required.
@@ -440,7 +454,11 @@ async def run_bot(
         context.add_message(
             {
                 "role": "user",
-                "content": "A customer just called. Greet them, 'This is Field & Flower, your local flower shop. How can I help you today?'",
+                "content": (
+                    "Someone has answered — you do NOT yet know who it is. Open the call: a brief, "
+                    f"warm greeting and ask if you're speaking with {first_name}. Do NOT name the "
+                    "company or mention any debt, balance, or creditor — verify identity first."
+                ),
             }
         )
         await worker.queue_frames([LLMRunFrame()])

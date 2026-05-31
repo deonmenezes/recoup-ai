@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Recoup AI — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg-base: #070b14;
+    --bg-surface: #0d1220;
+    --bg-card: #111827;
+    --bg-card-hover: #151e2e;
+    --border: rgba(255,255,255,0.06);
+    --border-bright: rgba(255,255,255,0.12);
+    --emerald: #10b981;
+    --emerald-dim: rgba(16,185,129,0.15);
+    --emerald-glow: rgba(16,185,129,0.25);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.15);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.15);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #475569;
+    --accent-blue: #3b82f6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* radial glow at top center */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 500px;
+    background: radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── GLASS CARD ── */
+  .glass {
+    background: rgba(17,24,39,0.7);
+    border: 1px solid var(--border-bright);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .glass-sm {
+    background: rgba(13,18,32,0.8);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    backdrop-filter: blur(12px);
+  }
+
+  /* ── ENTRANCE ANIMATIONS ── */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes barGrow {
+    from { width: 0% !important; }
+  }
+  @keyframes pulse-ring {
+    0%   { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+  @keyframes livePulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+
+  /* waveform bars */
+  @keyframes wave1 { 0%,100%{height:4px}50%{height:18px} }
+  @keyframes wave2 { 0%,100%{height:8px}50%{height:24px} }
+  @keyframes wave3 { 0%,100%{height:12px}50%{height:6px} }
+  @keyframes wave4 { 0%,100%{height:6px}50%{height:20px} }
+  @keyframes wave5 { 0%,100%{height:16px}50%{height:4px} }
+  @keyframes wave6 { 0%,100%{height:4px}50%{height:14px} }
+  @keyframes wave7 { 0%,100%{height:10px}50%{height:22px} }
+  @keyframes wave8 { 0%,100%{height:14px}50%{height:8px} }
+
+  .wave-bar {
+    width: 3px;
+    border-radius: 2px;
+    background: var(--emerald);
+    display: inline-block;
+    animation-duration: 0.9s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+  }
+  .wave-bar:nth-child(1) { animation-name: wave1; animation-delay: 0s; }
+  .wave-bar:nth-child(2) { animation-name: wave2; animation-delay: 0.1s; }
+  .wave-bar:nth-child(3) { animation-name: wave3; animation-delay: 0.2s; }
+  .wave-bar:nth-child(4) { animation-name: wave4; animation-delay: 0.05s; }
+  .wave-bar:nth-child(5) { animation-name: wave5; animation-delay: 0.15s; }
+  .wave-bar:nth-child(6) { animation-name: wave6; animation-delay: 0.25s; }
+  .wave-bar:nth-child(7) { animation-name: wave7; animation-delay: 0.08s; }
+  .wave-bar:nth-child(8) { animation-name: wave8; animation-delay: 0.18s; }
+
+  .animate-in { animation: fadeSlideUp 0.55s cubic-bezier(0.16,1,0.3,1) both; }
+  .delay-1 { animation-delay: 0.08s; }
+  .delay-2 { animation-delay: 0.16s; }
+  .delay-3 { animation-delay: 0.24s; }
+  .delay-4 { animation-delay: 0.32s; }
+  .delay-5 { animation-delay: 0.40s; }
+  .delay-6 { animation-delay: 0.48s; }
+  .delay-7 { animation-delay: 0.56s; }
+
+  /* ── NAV ── */
+  .nav {
+    border-bottom: 1px solid var(--border);
+    background: rgba(7,11,20,0.85);
+    backdrop-filter: blur(24px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+  .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+  }
+  .wordmark-diamond {
+    color: var(--emerald);
+    font-size: 18px;
+  }
+  .nav-pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 999px;
+    letter-spacing: 0.2px;
+    border: 1px solid var(--border-bright);
+    color: var(--text-secondary);
+    background: rgba(255,255,255,0.03);
+    white-space: nowrap;
+  }
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(16,185,129,0.3);
+    color: var(--emerald);
+    background: rgba(16,185,129,0.08);
+    letter-spacing: 0.2px;
+  }
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--emerald);
+    animation: livePulse 2s ease-in-out infinite;
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 1100px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .kpi-card {
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: rgba(255,255,255,0.18); }
+  .kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+    margin-bottom: 10px;
+  }
+  .kpi-value {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .kpi-delta {
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: 6px;
+  }
+  .kpi-delta.up   { color: var(--emerald); background: var(--emerald-dim); }
+  .kpi-delta.down { color: #f59e0b; background: var(--amber-dim); }
+
+  /* ── COMPLIANCE CENTERPIECE ── */
+  .compliance-card {
+    padding: 32px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .compliance-card::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(16,185,129,0.07) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .compliance-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .compliance-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .compliance-subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    max-width: 560px;
+    line-height: 1.5;
+  }
+  .cekura-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(16,185,129,0.25);
+    background: rgba(16,185,129,0.06);
+    color: var(--emerald);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .bar-legend {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  .legend-swatch {
+    width: 28px;
+    height: 4px;
+    border-radius: 2px;
+  }
+  .metric-row {
+    margin-bottom: 20px;
+  }
+  .metric-row:last-child { margin-bottom: 0; }
+  .metric-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 7px;
+  }
+  .metric-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .metric-delta-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+  }
+  .delta-positive { color: var(--emerald); background: var(--emerald-dim); }
+  .delta-held     { color: #94a3b8; background: rgba(148,163,184,0.1); }
+  .bar-track {
+    height: 8px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 5px;
+  }
+  .bar-track + .bar-track { /* second bar */}
+  .bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    animation: barGrow 1.2s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .bar-before { background: linear-gradient(90deg, #b45309, #f59e0b); }
+  .bar-after  { background: linear-gradient(90deg, #059669, #10b981); }
+  .bar-held   { background: linear-gradient(90deg, #1d4ed8, #3b82f6); }
+  .bar-values {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .bar-val-before { color: #f59e0b; font-weight: 600; }
+  .bar-val-after  { color: #10b981; font-weight: 600; }
+  .compliance-caption {
+    margin-top: 28px;
+    padding: 16px 18px;
+    background: rgba(16,185,129,0.05);
+    border: 1px solid rgba(16,185,129,0.15);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-style: italic;
+  }
+  .compliance-caption strong {
+    color: var(--emerald);
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  /* ── BOTTOM 2-COL ── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 800px) {
+    .bottom-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── LIVE AGENT CARD ── */
+  .agent-card { padding: 26px 28px; position: relative; overflow: hidden; }
+  .agent-card::before {
+    content: '';
+    position: absolute;
+    bottom: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .agent-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .agent-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1e3a5f, #0d4a3a);
+    border: 1px solid rgba(16,185,129,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--emerald);
+    position: relative;
+  }
+  .agent-pulse-outer {
+    position: absolute;
+    top: -2px; right: -2px;
+    width: 10px; height: 10px;
+  }
+  .agent-pulse-dot {
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    background: var(--emerald);
+  }
+  .agent-pulse-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--emerald);
+    animation: pulse-ring 1.8s cubic-bezier(0,0,0.2,1) infinite;
+  }
+  .agent-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.2px;
+  }
+  .agent-sub {
+    font-size: 12px;
+    color: var(--emerald);
+    font-weight: 500;
+  }
+  .agent-stat {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 18px;
+  }
+  .agent-stat span {
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+  .waveform {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 28px;
+    margin-bottom: 20px;
+    padding: 0 2px;
+  }
+  .step-track {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .step-chip {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 11px;
+    border-radius: 999px;
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+  }
+  .step-chip.done {
+    background: var(--emerald-dim);
+    color: var(--emerald);
+    border: 1px solid rgba(16,185,129,0.2);
+  }
+  .step-chip.active {
+    background: rgba(59,130,246,0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59,130,246,0.3);
+    box-shadow: 0 0 12px rgba(59,130,246,0.15);
+  }
+  .step-chip.pending {
+    background: rgba(255,255,255,0.03);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .step-arrow {
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 0 6px;
+  }
+
+  /* ── RECENT CALLS TABLE ── */
+  .calls-card { padding: 26px 28px; }
+  .calls-table { width: 100%; border-collapse: collapse; }
+  .calls-table th {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 0 0 10px 0;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .calls-table td {
+    padding: 11px 0;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    vertical-align: top;
+  }
+  .calls-table tr:last-child td { border-bottom: none; }
+  .calls-table tr:hover td { color: var(--text-primary); }
+  .persona-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 12px;
+    display: block;
+  }
+  .outcome-text {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+  .check-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--emerald-dim);
+    border: 1px solid rgba(16,185,129,0.2);
+    color: var(--emerald);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 900px) {
+    .how-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .how-card {
+    padding: 22px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .how-step-num {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .how-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    margin-bottom: 12px;
+  }
+  .how-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.2px;
+    margin-bottom: 6px;
+  }
+  .how-desc {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .how-tag {
+    margin-top: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    display: inline-block;
+  }
+  .connector {
+    position: absolute;
+    top: 50%;
+    right: -6px;
+    width: 12px;
+    height: 1px;
+    background: var(--border);
+    z-index: 2;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .footer-brand {
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  /* bar animation delays */
+  .bar-delay-0 { animation-delay: 0.3s; }
+  .bar-delay-1 { animation-delay: 0.45s; }
+  .bar-delay-2 { animation-delay: 0.6s; }
+  .bar-delay-3 { animation-delay: 0.75s; }
+  .bar-delay-4 { animation-delay: 0.9s; }
+  .bar-delay-5 { animation-delay: 1.05s; }
+  .bar-delay-6 { animation-delay: 1.2s; }
+  .bar-delay-7 { animation-delay: 1.35s; }
+  .bar-delay-8 { animation-delay: 1.5s; }
+
+  /* top-line gradient accent on hero cards */
+  .card-accent-emerald::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 20px; right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--emerald), transparent);
+    opacity: 0.5;
+  }
+
+  /* number glow */
+  .number-glow {
+    text-shadow: 0 0 24px rgba(16,185,129,0.3);
+  }
+</style>
+</head>
+<body>
+
+<!-- ────────────────────────────────────────────────────────────────
+     NAV
+──────────────────────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="container">
+    <div class="nav-inner">
+      <div class="wordmark">
+        <span class="wordmark-diamond">◆</span>
+        <span>Recoup AI</span>
+      </div>
+      <div class="nav-pills">
+        <span class="pill">NVIDIA Nemotron · Magpie</span>
+        <span class="pill">Pipecat</span>
+        <span class="pill">Twilio</span>
+        <span class="pill">Cekura</span>
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          System Operational
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ────────────────────────────────────────────────────────────────
+     MAIN
+──────────────────────────────────────────────────────────────────── -->
+<main class="container" style="padding-top:32px; padding-bottom:60px;">
+
+  <!-- ── KPI HERO ROW ── -->
+  <div class="section-label animate-in">Portfolio Overview</div>
+  <div class="kpi-grid" style="margin-bottom:28px;">
+
+    <div class="glass kpi-card animate-in delay-1" style="position:relative;">
+      <div class="kpi-label">Total Interactions</div>
+      <div class="kpi-value number-glow">53,705</div>
+      <span class="kpi-delta up">↑ 12.4% MTD</span>
+    </div>
+
+    <div class="glass kpi-card animate-in delay-2" style="position:relative;">
+      <div class="kpi-label">Promises to Pay</div>
+      <div class="kpi-value">12,587</div>
+      <span class="kpi-delta up">↑ 8.1% vs prior</span>
+    </div>
+
+    <div class="glass kpi-card animate-in delay-3" style="position:relative;">
+      <div class="kpi-label">Total Promises</div>
+      <div class="kpi-value" style="font-size:23px; letter-spacing:-0.5px;">$1.96M</div>
+      <span class="kpi-delta up">↑ 23.7% vs prior</span>
+    </div>
+
+    <div class="glass kpi-card animate-in delay-4" style="position:relative;">
+      <div class="kpi-label">Contactability Rate</div>
+      <div class="kpi-value">56%</div>
+      <span class="kpi-delta up">↑ vs industry avg</span>
+    </div>
+
+    <div class="glass kpi-card animate-in delay-5" style="position:relative;">
+      <div class="kpi-label">Recovery Cost</div>
+      <div class="kpi-value" style="color:#f59e0b;">−2.1 pts</div>
+      <span class="kpi-delta down" style="color:#10b981;background:var(--emerald-dim);">Cost per dollar ↓</span>
+    </div>
+
+  </div>
+
+  <!-- ── COMPLIANCE CENTERPIECE ── -->
+  <div class="section-label animate-in delay-3">Cekura Compliance Loop</div>
+
+  <div class="glass compliance-card card-accent-emerald animate-in delay-4" style="margin-bottom:28px; position:relative;">
+    <div class="compliance-header">
+      <div>
+        <div class="compliance-title">Compliance Self-Improvement Loop</div>
+        <div class="compliance-subtitle">
+          Adversarial simulation → failure analysis → code-enforced gates → auto-redeploy. Zero human edits required.
+        </div>
+      </div>
+      <div class="cekura-badge">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M6 1L7.5 4.5H11L8 6.5L9.5 10L6 8L2.5 10L4 6.5L1 4.5H4.5L6 1Z" fill="currentColor"/>
+        </svg>
+        Powered by Cekura
+      </div>
+    </div>
+
+    <div class="bar-legend">
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:linear-gradient(90deg,#b45309,#f59e0b);"></div>
+        <span>Before (6 eval runs)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:linear-gradient(90deg,#059669,#10b981);"></div>
+        <span>After (4 eval runs)</span>
+      </div>
+    </div>
+
+    <!-- METRIC ROWS -->
+
+    <!-- 1. Fully compliant -->
+    <div class="metric-row animate-in delay-3">
+      <div class="metric-label-row">
+        <span class="metric-name">Fully-compliant scenarios</span>
+        <span class="metric-delta-badge delta-positive">+33 pts</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-before bar-delay-0" style="width:17%;"></div>
+      </div>
+      <div class="bar-track" style="margin-bottom:5px;">
+        <div class="bar-fill bar-after bar-delay-1" style="width:50%;"></div>
+      </div>
+      <div class="bar-values">
+        <span class="bar-val-before">Before: 17% &nbsp;(1/6)</span>
+        <span class="bar-val-after">After: 50% &nbsp;(2/4)</span>
+      </div>
+    </div>
+
+    <!-- 2. Right-party verified -->
+    <div class="metric-row animate-in delay-3" style="margin-top:16px;">
+      <div class="metric-label-row">
+        <span class="metric-name">Right-party verified before disclosure</span>
+        <span class="metric-delta-badge delta-positive">+58 pts</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-before bar-delay-2" style="width:17%;"></div>
+      </div>
+      <div class="bar-track" style="margin-bottom:5px;">
+        <div class="bar-fill bar-after bar-delay-3" style="width:75%;"></div>
+      </div>
+      <div class="bar-values">
+        <span class="bar-val-before">Before: 17% &nbsp;(1/6)</span>
+        <span class="bar-val-after">After: 75% &nbsp;(3/4)</span>
+      </div>
+    </div>
+
+    <!-- 3. Honored cease request -->
+    <div class="metric-row animate-in delay-4" style="margin-top:16px;">
+      <div class="metric-label-row">
+        <span class="metric-name">Honored cease &amp; desist request</span>
+        <span class="metric-delta-badge delta-positive">+100 pts</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-before bar-delay-4" style="width:0.5%;"></div>
+      </div>
+      <div class="bar-track" style="margin-bottom:5px;">
+        <div class="bar-fill bar-after bar-delay-5" style="width:100%;"></div>
+      </div>
+      <div class="bar-values">
+        <span class="bar-val-before">Before: 0%</span>
+        <span class="bar-val-after">After: 100%</span>
+      </div>
+    </div>
+
+    <!-- 4. Secured promise-to-pay -->
+    <div class="metric-row animate-in delay-4" style="margin-top:16px;">
+      <div class="metric-label-row">
+        <span class="metric-name">Secured promise-to-pay</span>
+        <span class="metric-delta-badge delta-positive">+67 pts</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-before bar-delay-6" style="width:33%;"></div>
+      </div>
+      <div class="bar-track" style="margin-bottom:5px;">
+        <div class="bar-fill bar-after bar-delay-7" style="width:100%;"></div>
+      </div>
+      <div class="bar-values">
+        <span class="bar-val-before">Before: 33%</span>
+        <span class="bar-val-after">After: 100%</span>
+      </div>
+    </div>
+
+    <!-- HELD METRICS — 3-column mini row -->
+    <div style="margin-top:22px; display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
+
+      <div style="padding:14px 16px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px;">
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">Mini-Miranda Given</div>
+        <div class="bar-track">
+          <div class="bar-fill bar-held bar-delay-0" style="width:100%;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:11px;font-weight:600;">
+          <span style="color:#3b82f6;">100%</span>
+          <span class="metric-delta-badge delta-held" style="font-size:10px;padding:1px 6px;">Held</span>
+        </div>
+      </div>
+
+      <div style="padding:14px 16px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px;">
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">No Harassment / Threats</div>
+        <div class="bar-track">
+          <div class="bar-fill bar-held bar-delay-2" style="width:100%;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:11px;font-weight:600;">
+          <span style="color:#3b82f6;">100%</span>
+          <span class="metric-delta-badge delta-held" style="font-size:10px;padding:1px 6px;">Held</span>
+        </div>
+      </div>
+
+      <div style="padding:14px 16px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px;">
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">Empathetic Tone</div>
+        <div class="bar-track">
+          <div class="bar-fill bar-held bar-delay-4" style="width:100%;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:11px;font-weight:600;">
+          <span style="color:#3b82f6;">100%</span>
+          <span class="metric-delta-badge delta-held" style="font-size:10px;padding:1px 6px;">Held</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="compliance-caption animate-in delay-6">
+      <strong>Cekura</strong> ran <strong>6 adversarial debtor personas</strong> → <strong>Claude</strong> read the failures → added <strong>code-enforced compliance gates</strong> → redeployed. <strong>No human edits.</strong>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM 2-COL ── -->
+  <div class="bottom-grid" style="margin-bottom:28px;">
+
+    <!-- LIVE AGENT -->
+    <div class="glass agent-card animate-in delay-3" style="position:relative;">
+      <div style="font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:16px;">Live Agent</div>
+
+      <div class="agent-header">
+        <div class="agent-avatar">
+          R
+          <div class="agent-pulse-outer">
+            <div class="agent-pulse-ring"></div>
+            <div class="agent-pulse-dot"></div>
+          </div>
+        </div>
+        <div>
+          <div class="agent-name">Riley</div>
+          <div class="agent-sub">Resolving in real time</div>
+        </div>
+      </div>
+
+      <div class="agent-stat">Avg call duration: <span>4.2 min</span> &nbsp;·&nbsp; Calls today: <span>1,247</span></div>
+
+      <!-- waveform -->
+      <div style="margin-bottom:8px;font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:0.8px;text-transform:uppercase;">Live Audio</div>
+      <div class="waveform">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+      </div>
+
+      <div style="margin-bottom:8px;font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:0.8px;text-transform:uppercase;">Current Step</div>
+      <div class="step-track" style="flex-wrap:wrap;gap:4px;">
+        <span class="step-chip done">Verify Identity</span>
+        <span class="step-arrow">›</span>
+        <span class="step-chip done">Mini-Miranda</span>
+        <span class="step-arrow">›</span>
+        <span class="step-chip active">Negotiate</span>
+        <span class="step-arrow">›</span>
+        <span class="step-chip pending">Promise to Pay</span>
+      </div>
+    </div>
+
+    <!-- RECENT CALLS -->
+    <div class="glass calls-card animate-in delay-4">
+      <div style="font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:16px;">Recent Calls</div>
+      <table class="calls-table">
+        <thead>
+          <tr>
+            <th style="width:34%;">Persona</th>
+            <th style="width:56%;">Outcome</th>
+            <th style="width:10%;text-align:center;">OK</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="persona-name">Cooperative payer</span></td>
+            <td><span class="outcome-text">Promise to pay · $75 today + 3-mo plan</span></td>
+            <td style="text-align:center;"><span class="check-badge">✓</span></td>
+          </tr>
+          <tr>
+            <td><span class="persona-name">Disputes the debt</span></td>
+            <td><span class="outcome-text">Dispute logged · validation mailed</span></td>
+            <td style="text-align:center;"><span class="check-badge">✓</span></td>
+          </tr>
+          <tr>
+            <td><span class="persona-name">Cease request</span></td>
+            <td><span class="outcome-text">Honored · do-not-call set</span></td>
+            <td style="text-align:center;"><span class="check-badge">✓</span></td>
+          </tr>
+          <tr>
+            <td><span class="persona-name">Wrong party</span></td>
+            <td><span class="outcome-text">No disclosure · call back</span></td>
+            <td style="text-align:center;"><span class="check-badge">✓</span></td>
+          </tr>
+          <tr>
+            <td><span class="persona-name">Hardship</span></td>
+            <td><span class="outcome-text">Plan offered · no coercion</span></td>
+            <td style="text-align:center;"><span class="check-badge">✓</span></td>
+          </tr>
+          <tr>
+            <td><span class="persona-name">Angry caller</span></td>
+            <td><span class="outcome-text">De-escalated</span></td>
+            <td style="text-align:center;"><span class="check-badge">✓</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- ── HOW IT WORKS ── -->
+  <div class="section-label animate-in delay-5">How It Works</div>
+  <div class="how-grid" style="margin-bottom:40px;">
+
+    <div class="glass how-card animate-in delay-5" style="position:relative;">
+      <div class="how-step-num">Step 01</div>
+      <div class="how-icon" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.15);">🏗</div>
+      <div class="how-title">Build & Customize</div>
+      <div class="how-desc">State-of-the-art open-weight NVIDIA models. Your voice, your scripts, your compliance rules.</div>
+      <div class="how-tag">NVIDIA Nemotron ASR · Magpie TTS · Nemotron-3-Super</div>
+    </div>
+
+    <div class="glass how-card animate-in delay-6" style="position:relative;">
+      <div class="how-step-num">Step 02</div>
+      <div class="how-icon" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.15);">📡</div>
+      <div class="how-title">Deploy at Scale</div>
+      <div class="how-desc">Real-time voice pipeline with sub-500 ms latency. Scales to thousands of concurrent calls instantly.</div>
+      <div class="how-tag">Pipecat · Twilio · WebRTC</div>
+    </div>
+
+    <div class="glass how-card animate-in delay-7" style="position:relative;">
+      <div class="how-step-num">Step 03</div>
+      <div class="how-icon" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.15);">🎯</div>
+      <div class="how-title">Simulate & Evaluate</div>
+      <div class="how-desc">6 adversarial debtor personas stress-test every FDCPA requirement automatically after each deploy.</div>
+      <div class="how-tag">Cekura · Adversarial Personas</div>
+    </div>
+
+    <div class="glass how-card animate-in delay-7" style="position:relative;">
+      <div class="how-step-num">Step 04</div>
+      <div class="how-icon" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.15);">♻</div>
+      <div class="how-title">Auto-Improve</div>
+      <div class="how-desc">Eval failures feed back into the agent. Code-enforced gates are added. Agent redeployed. No humans.</div>
+      <div class="how-tag">Claude · Self-Healing Loop</div>
+    </div>
+
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <div class="footer animate-in delay-7">
+    <div>
+      <span class="footer-brand">Recoup AI</span> — data-driven collections. Built on NVIDIA Nemotron + Magpie, Pipecat, Twilio, Cekura.
+    </div>
+    <div>© 2026 Recoup AI. All rights reserved.</div>
+  </div>
+
+</main>
+
+<script>
+  // Stagger bar animations for the compliance chart
+  // so they don't all fire at once
+  document.addEventListener('DOMContentLoaded', () => {
+    const bars = document.querySelectorAll('.bar-fill');
+    bars.forEach((bar, i) => {
+      bar.style.animationDelay = (0.4 + i * 0.12) + 's';
+      bar.style.animationFillMode = 'both';
+    });
+
+    // Faux live counter — increment "Calls today" every few seconds
+    const callsEl = document.querySelectorAll('.agent-stat span')[1];
+    if (callsEl) {
+      let count = 1247;
+      setInterval(() => {
+        count += Math.floor(Math.random() * 3);
+        callsEl.textContent = count.toLocaleString();
+      }, 3500);
+    }
+  });
+</script>
+</body>
+</html>
