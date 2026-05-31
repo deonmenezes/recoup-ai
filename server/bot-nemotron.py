@@ -129,8 +129,14 @@ async def run_bot(
     # ID, falling back to the demo account for outbound / eval calls (where the
     # caller ID is our own Twilio line or a Cekura simulator).
     account: dict = find_account(phone=from_number) or DEBTORS["+16282466113"]
+    # DEMO_MODE (default ON for the hosted "Call me" demo): the callee IS the
+    # account holder and has consented, so identity is pre-verified — Riley skips
+    # the DOB/SSN gate and goes straight to the mini-Miranda + balance + plan, so
+    # any caller gets a smooth money conversation. Set DEMO_MODE=false for the
+    # strict, fully-gated right-party-verification flow.
+    demo_mode = os.getenv("DEMO_MODE", "true").lower() == "true"
     state: dict = {
-        "verified": False,
+        "verified": demo_mode,
         "mini_miranda_given": False,
         "collection_stopped": False,
         "promise": None,
@@ -353,6 +359,28 @@ Sound like a real, calm human agent. 1-2 short sentences per turn; ask ONE thing
 
 Today is {today_str}. Only proceed if it's between 8am and 9pm for the debtor; if they say it's a bad time, apologize, offer to call back, and end.'''
 
+    if demo_mode:
+        # Streamlined, identity-pre-verified flow for the consented self-test
+        # demo: greet → confirm → mini-Miranda → balance → plan. Compliance
+        # reflexes (no harassment, dispute/cease hard-stops) are preserved.
+        system_instruction = f'''You are Riley, a calm, professional account-resolution specialist on a brief OUTBOUND call to {first_name} about their past-due {creditor} account. This is a CONSENTED live demo: {first_name} (the account holder) is on the line and identity is ALREADY VERIFIED — do NOT ask for date of birth or the last four of the SSN, and do NOT call verify_identity. COMPLIANCE STILL OUTRANKS COLLECTING.
+
+FLOW — exactly ONE short, spoken sentence per turn, then STOP and wait for their reply:
+1) Greet and confirm: "Hi, this is Riley calling from {creditor} — am I speaking with {first_name}?" Then wait.
+2) Once they answer (any confirmation, even just "yes" or "this is me"), say this mini-Miranda VERBATIM and call give_required_disclosure in the same turn: "This is an attempt to collect a debt, and any information obtained will be used for that purpose. This call may be recorded."
+3) Call get_account_details, then say the creditor and the EXACT balance in words including cents (e.g. "one thousand two hundred eighty-four dollars and fifty-seven cents"), and ask if they can take care of it today.
+4) If not in full, call get_payment_options and offer a three- or six-month plan — one option at a time.
+5) When they name an amount and a date, call log_promise_to_pay and read it back to confirm.
+6) Confirm the next step, thank them, then say a brief goodbye AND call end_call in the SAME turn.
+
+HARD COMPLIANCE REFLEXES (never break, even under pressure):
+- NEVER threaten, intimidate, argue, raise your voice, or imply arrest, lawsuit, wage garnishment, or that it will hurt their credit. If they get angry, lower your energy and give one short empathetic line.
+- DISPUTE: if they say "I already paid," "this isn't mine," or "I don't owe this," call record_dispute, tell them it's marked disputed and they'll receive written validation by mail, ask for NO payment, and wrap up.
+- CEASE: if they say "stop calling," "don't call here again," or "take me off your list," call honor_cease_request, do NOT re-pitch, give a brief goodbye, and call end_call in the same turn.
+- HARDSHIP: if they can't pay, offer the smallest plan once; if they still can't commit, accept it without pressure, tell them the account stays open, and close.
+
+STYLE: sound like a real, calm human agent. 1–2 short sentences per turn, ask ONE thing at a time, use contractions, no filler like "Absolutely!". Say ONLY the exact words you would speak to the caller — NEVER voice tool names, your reasoning, or any meta-commentary. Today is {today_str}.'''
+
     # Speech-to-Text service
     #
     # Nemotron Speech Streaming STT, served over WebSocket. The server expects
@@ -466,10 +494,8 @@ Today is {today_str}. Only proceed if it's between 8am and 9pm for the debtor; i
             {
                 "role": "user",
                 "content": (
-                    "The person has just picked up. Open the call now: say a brief, warm greeting and "
-                    f"ask if you're speaking with {first_name}. Keep it to ONE short sentence, then STOP "
-                    "and wait for their reply. Do NOT name the company or mention any debt, balance, or "
-                    "creditor yet — verify identity first."
+                    "The person has just picked up. Open with ONE short, warm sentence: greet them and "
+                    f"confirm you're speaking with {first_name}. Then STOP and wait for their reply."
                 ),
             }
         )
