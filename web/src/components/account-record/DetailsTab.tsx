@@ -3,7 +3,8 @@
 import { Lock, MailIcon, Phone, BadgeCheck, Star } from "lucide-react";
 import { KeyValue, SectionLabel, Divider } from "@/components/ui/primitives";
 import { Badge } from "@/components/ui/Badge";
-import { prettyPhone, relativeTime } from "@/lib/format";
+import { prettyPhone } from "@/lib/format";
+import { RelTime } from "@/components/ui/RelTime";
 import { PAYMENT_OPTIONS } from "@/lib/data";
 import type { Debtor } from "@/lib/types";
 
@@ -47,7 +48,7 @@ export function DetailsTab({ account }: Props) {
           />
           <KeyValue
             label="Last contact"
-            value={account.lastContactISO ? relativeTime(account.lastContactISO) : "—"}
+            value={<RelTime iso={account.lastContactISO} />}
           />
           <KeyValue label="Original creditor" value={account.originalCreditor} />
         </dl>

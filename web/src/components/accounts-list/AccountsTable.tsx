@@ -6,7 +6,8 @@ import { PhoneCall, ExternalLink, Clock, ArrowUp, ArrowDown, ArrowUpDown, Ban } 
 import Link from "next/link";
 
 import type { Debtor } from "@/lib/types";
-import { money, relativeTime } from "@/lib/format";
+import { money } from "@/lib/format";
+import { RelTime } from "@/components/ui/RelTime";
 import { Avatar } from "@/components/ui/Avatar";
 import { StatusPill, RiskPill } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -175,7 +176,7 @@ function TableRow({
         {account.lastContactISO ? (
           <span className="text-sm text-muted flex items-center gap-1">
             <Clock className="size-3.5 shrink-0 text-subtle" aria-hidden />
-            {relativeTime(account.lastContactISO)}
+            <RelTime iso={account.lastContactISO} />
           </span>
         ) : (
           <span className="text-sm text-faint">Never</span>
@@ -263,7 +264,7 @@ function MobileCard({
         {account.lastContactISO ? (
           <span className="flex items-center gap-1 text-xs text-muted">
             <Clock className="size-3.5 text-subtle shrink-0" aria-hidden />
-            {relativeTime(account.lastContactISO)}
+            <RelTime iso={account.lastContactISO} />
           </span>
         ) : (
           <span className="text-xs text-faint">No contact yet</span>

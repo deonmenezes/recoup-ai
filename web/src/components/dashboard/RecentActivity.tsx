@@ -15,7 +15,7 @@ import { motion } from "framer-motion";
 import { Card, CardHeader, Tooltip } from "@/components/ui/primitives";
 import { Badge } from "@/components/ui/Badge";
 import { COMPLIANCE_CHECKS } from "@/lib/data";
-import { relativeTime } from "@/lib/format";
+import { RelTime } from "@/components/ui/RelTime";
 import type { ActivityEvent, ActivityType, ComplianceKey } from "@/lib/types";
 import type { Debtor } from "@/lib/types";
 import { TONE_HEX } from "@/components/ui/tones";
@@ -122,7 +122,7 @@ function ActivityRow({
               dateTime={event.timestampISO}
               title={event.timestampISO}
             >
-              {relativeTime(event.timestampISO)}
+              <RelTime iso={event.timestampISO} />
             </time>
           </div>
 

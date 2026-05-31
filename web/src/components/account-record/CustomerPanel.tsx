@@ -16,7 +16,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { StatusPill } from "@/components/ui/Badge";
 import { Card, CardHeader, KeyValue, SectionLabel, Divider } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/Button";
-import { money, money0, prettyPhone, relativeTime } from "@/lib/format";
+import { money, money0, prettyPhone } from "@/lib/format";
+import { RelTime } from "@/components/ui/RelTime";
 import type { Debtor } from "@/lib/types";
 
 const NEXT_BEST_ACTION: Record<
@@ -137,7 +138,7 @@ export function CustomerPanel({ account, recentActivities, onStartCall }: Props)
               value={
                 <span className="flex items-center gap-1">
                   <Clock className="size-3 text-subtle" aria-hidden />
-                  {account.lastContactISO ? relativeTime(account.lastContactISO) : "—"}
+                  <RelTime iso={account.lastContactISO} />
                 </span>
               }
             />
@@ -205,7 +206,7 @@ export function CustomerPanel({ account, recentActivities, onStartCall }: Props)
                   <span className="mt-1.5 size-1.5 rounded-full bg-primary shrink-0" aria-hidden />
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-ink leading-snug">{ev.title}</p>
-                    <p className="text-[11px] text-subtle tnum">{relativeTime(ev.timestampISO)}</p>
+                    <p className="text-[11px] text-subtle tnum"><RelTime iso={ev.timestampISO} /></p>
                   </div>
                 </li>
               ))}
