@@ -111,16 +111,77 @@ export async function POST(request: Request) {
     const publicBase = publicBaseFrom(request);
     const conversational = hasNvidia() && Boolean(publicBase);
 
+    const place = address.split(",")[0]?.trim() || "your location";
+    const greeting =
+      `Hi! This is Riley from GridPath with the rundown on ${place}. ` +
+      `The nearest grid connection is about ${estimate.distanceFeet} feet away, ` +
+      `the estimated cost to connect is ${formatUsd(estimate.estimatedCost.total)}, ` +
+      `and the timeline is ${estimate.estimatedTimeline.label}.`;
+
+    // Preferred path: ElevenLabs Conversational AI over Twilio — a real-time,
+    // natural two-way voice agent ("Riley"). The location facts are injected as
+    // dynamic variables the agent's prompt references. Falls through to the
+    // legacy Twilio/Nemotron path below if not configured or if the call fails.
+    const elKey = process.env.ELEVENLABS_API_KEY;
+    const elAgent = process.env.ELEVENLABS_AGENT_ID;
+    const elPhone = process.env.ELEVENLABS_PHONE_NUMBER_ID;
+    if (elKey && elAgent && elPhone) {
+      try {
+        const elRes = await fetch(
+          "https://api.elevenlabs.io/v1/convai/twilio/outbound-call",
+          {
+            method: "POST",
+            headers: { "xi-api-key": elKey, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              agent_id: elAgent,
+              agent_phone_number_id: elPhone,
+              to_number: to,
+              conversation_initiation_client_data: {
+                dynamic_variables: {
+                  place,
+                  greeting,
+                  facts: briefFacts(estimate, plan),
+                },
+              },
+            }),
+          }
+        );
+        const elData = (await elRes.json().catch(() => ({}))) as {
+          success?: boolean;
+          callSid?: string;
+          conversation_id?: string;
+          message?: string;
+        };
+        if (
+          elRes.ok &&
+          elData.success !== false &&
+          (elData.callSid || elData.conversation_id)
+        ) {
+          return NextResponse.json({
+            sid: elData.callSid ?? null,
+            status: "queued",
+            to,
+            provider: "elevenlabs",
+            conversationId: elData.conversation_id ?? null,
+          });
+        }
+        console.error(
+          "ElevenLabs outbound-call failed; falling back to Twilio.",
+          elRes.status,
+          elData
+        );
+      } catch (err) {
+        console.error(
+          "ElevenLabs outbound-call threw; falling back to Twilio.",
+          err
+        );
+      }
+    }
+
     const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Calls.json`;
     const form = new URLSearchParams({ To: to, From: from });
 
     if (conversational) {
-      const place = address.split(",")[0]?.trim() || "your location";
-      const greeting =
-        `Hi! This is Riley from GridPath with the rundown on ${place}. ` +
-        `The nearest grid connection is about ${estimate.distanceFeet} feet away, ` +
-        `the estimated cost to connect is ${formatUsd(estimate.estimatedCost.total)}, ` +
-        `and the timeline is ${estimate.estimatedTimeline.label}.`;
       const ctx = encodeCtx({ facts: briefFacts(estimate, plan), greeting });
       form.set(
         "Url",
