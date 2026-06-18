@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogoFull, LogoMark } from "@/components/Logo";
+import Icon from "@/components/Icon";
 
 export default function Landing() {
   return (
@@ -13,7 +14,7 @@ export default function Landing() {
           <a href="#why">Why GridPath</a>
         </nav>
         <Link href="/app" className="nav-cta">
-          Launch app →
+          Launch app <Icon name="arrow-right" size={16} />
         </Link>
       </header>
 
@@ -31,7 +32,7 @@ export default function Landing() {
           </p>
           <div className="hero-cta">
             <Link href="/app" className="btn-primary">
-              Check your address →
+              Check your address <Icon name="arrow-right" size={17} />
             </Link>
             <Link href="/app?demo=1" className="btn-ghost">
               See a live demo
@@ -63,9 +64,9 @@ export default function Landing() {
               </div>
             </div>
             <div className="hc-plan">
-              <span className="hc-chip">☀️ Solar</span>
-              <span className="hc-chip">🔋 Battery</span>
-              <span className="hc-chip">♨️ Heat pump</span>
+              <span className="hc-chip"><Icon name="sun" size={14} /> Solar</span>
+              <span className="hc-chip"><Icon name="battery" size={14} /> Battery</span>
+              <span className="hc-chip"><Icon name="heat" size={14} /> Heat pump</span>
             </div>
             <div className="hc-foot">Clean energy starts with clear connections.</div>
           </div>
@@ -115,13 +116,13 @@ export default function Landing() {
               cut your carbon and your bill.
             </p>
             <ul className="band-list">
-              <li>☀️ Rooftop solar sized to your roof and usage</li>
-              <li>🔋 Battery for outage resilience and time-of-use savings</li>
-              <li>♨️ Heat-pump electrification of heating + hot water</li>
-              <li>🔌 EV charging fueled by your own solar</li>
+              <li><span className="li-tile"><Icon name="sun" size={16} /></span> Rooftop solar sized to your roof and usage</li>
+              <li><span className="li-tile"><Icon name="battery" size={16} /></span> Battery for outage resilience and time-of-use savings</li>
+              <li><span className="li-tile"><Icon name="heat" size={16} /></span> Heat-pump electrification of heating + hot water</li>
+              <li><span className="li-tile"><Icon name="plug" size={16} /></span> EV charging fueled by your own solar</li>
             </ul>
             <Link href="/app" className="btn-primary">
-              Build my clean-energy plan →
+              Build my clean-energy plan <Icon name="arrow-right" size={17} />
             </Link>
           </div>
           <div className="band-stat-grid">
@@ -149,23 +150,23 @@ export default function Landing() {
       <section id="why" className="section">
         <h2 className="section-h2">Built to be explainable, not a black box</h2>
         <div className="features">
-          <div className="feature">
-            <span className="f-icon">📐</span>
+          <div className="feature sage">
+            <span className="f-icon"><Icon name="ruler" size={24} /></span>
             <h3>Transparent math</h3>
             <p>Every dollar and week traces back to one measured number — distance to the grid.</p>
           </div>
-          <div className="feature">
-            <span className="f-icon">🗺️</span>
+          <div className="feature sage">
+            <span className="f-icon"><Icon name="map" size={24} /></span>
             <h3>Real map data</h3>
             <p>Live OpenStreetMap power infrastructure, with optional Google 3D and Solar data.</p>
           </div>
           <div className="feature">
-            <span className="f-icon">✦</span>
+            <span className="f-icon"><Icon name="sparkle" size={24} /></span>
             <h3>Claude-powered advice</h3>
             <p>An AI advisor turns your property's signals into a ranked, honest clean-energy plan.</p>
           </div>
           <div className="feature">
-            <span className="f-icon">⚡</span>
+            <span className="f-icon"><Icon name="bolt" size={24} /></span>
             <h3>Grants + one-click apply</h3>
             <p>We stack the grants you qualify for to cut the cost, then auto-fill your government application and hand you a ready-to-file PDF.</p>
           </div>
@@ -176,7 +177,7 @@ export default function Landing() {
       <section className="cta-band">
         <h2>See where the grid is — and how to go clean.</h2>
         <Link href="/app" className="btn-primary big">
-          Check your address →
+          Check your address <Icon name="arrow-right" size={19} />
         </Link>
       </section>
 

@@ -14,6 +14,12 @@ import "leaflet/dist/leaflet.css";
 import type { ConnectionEstimate, LatLon } from "@/lib/types";
 import { DEMO_REGION } from "@/lib/fixtures";
 
+// Inline-SVG marker glyphs (match the app Icon set; currentColor inherits pin color).
+const HOUSE_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5h4v5"/></svg>';
+const BOLT_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 13.5h6L11 22l9-11.5h-6L13 2Z"/></svg>';
+
 function divIcon(className: string, inner: string, size = 34) {
   return L.divIcon({
     className: "gp-icon",
@@ -85,8 +91,8 @@ export default function MapView({ estimate }: { estimate: ConnectionEstimate | n
     ? [estimate.coordinates.lat, estimate.coordinates.lon]
     : [DEMO_REGION.lat, DEMO_REGION.lon];
 
-  const propertyIcon = useMemo(() => divIcon("map-pin property", "⌂"), []);
-  const gridIcon = useMemo(() => divIcon("map-pin grid", "⚡"), []);
+  const propertyIcon = useMemo(() => divIcon("map-pin property", HOUSE_SVG), []);
+  const gridIcon = useMemo(() => divIcon("map-pin grid", BOLT_SVG), []);
 
   const property = estimate?.coordinates ?? null;
   const grid = estimate

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Icon from "@/components/Icon";
 import type { ConnectionEstimate } from "@/lib/types";
 
 type Status = "idle" | "calling" | "placed" | "error";
@@ -28,7 +29,7 @@ export default function CallButton({ estimate }: { estimate: ConnectionEstimate 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not place the call");
       setStatus("placed");
-      setMessage(`📞 Calling ${data.to} now — Riley will brief you on this location.`);
+      setMessage(`Calling ${data.to} now — Riley will brief you on this location.`);
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "Something went wrong");
@@ -37,7 +38,7 @@ export default function CallButton({ estimate }: { estimate: ConnectionEstimate 
 
   return (
     <div className="call-cta">
-      <div className="step-label">📞 Get an AI call about this location</div>
+      <div className="step-label"><Icon name="phone" size={16} /> Get an AI call about this location</div>
       <p className="call-blurb">
         We&apos;ll call your phone and walk you through this site&apos;s grid distance,
         cost, timeline, and best clean-energy move.

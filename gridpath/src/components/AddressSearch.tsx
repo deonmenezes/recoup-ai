@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Icon from "@/components/Icon";
 import type { GeocodeResult } from "@/lib/types";
 
 interface Props {
@@ -69,12 +70,13 @@ export default function AddressSearch({ value, onChange, onSelect, onClear }: Pr
             left: 14,
             top: "50%",
             transform: "translateY(-50%)",
-            color: "var(--ink-muted)",
-            fontSize: 16,
+            color: "var(--ink)",
+            display: "grid",
+            placeItems: "center",
             pointerEvents: "none",
           }}
         >
-          ◎
+          <Icon name="pin" size={16} />
         </span>
         <input
           type="text"

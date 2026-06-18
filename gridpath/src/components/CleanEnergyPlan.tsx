@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { formatUsd } from "@/lib/cost";
+import Icon, { type IconName } from "@/components/Icon";
 import type { CleanEnergyPlan, GeocodeResult } from "@/lib/types";
+
+/** Map clean-energy option keys to geometric icons (avoids emoji from lib data). */
+const OPTION_ICON: Record<string, IconName> = {
+  rooftop_solar: "sun",
+  battery: "battery",
+  heat_pump: "heat",
+  ev_charger: "plug",
+};
 
 export default function CleanEnergyPlanView({ selected }: { selected: GeocodeResult }) {
   const [plan, setPlan] = useState<CleanEnergyPlan | null>(null);
@@ -41,7 +50,13 @@ export default function CleanEnergyPlanView({ selected }: { selected: GeocodeRes
         3. Make your energy clean
         {plan && (
           <span className={`src-badge ${plan.source}`}>
-            {plan.source === "claude" ? "✦ Claude" : "estimate"}
+            {plan.source === "claude" ? (
+              <>
+                <Icon name="sparkle" size={11} /> Claude
+              </>
+            ) : (
+              "estimate"
+            )}
           </span>
         )}
       </div>
@@ -62,8 +77,10 @@ export default function CleanEnergyPlanView({ selected }: { selected: GeocodeRes
           <div className="score">
             <div className="score-row">
               <span>Clean energy score</span>
-              <span className="score-nums">
-                {plan.cleanScoreBefore} → <b>{plan.cleanScoreAfter}</b>
+              <span className="score-nums" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                {plan.cleanScoreBefore}
+                <Icon name="arrow-right" size={13} />
+                <b>{plan.cleanScoreAfter}</b>
               </span>
             </div>
             <div className="score-bar">
@@ -86,7 +103,9 @@ export default function CleanEnergyPlanView({ selected }: { selected: GeocodeRes
               .map((o) => (
                 <div key={o.key} className={`opt ${o.recommended ? "rec" : ""}`}>
                   <div className="opt-head">
-                    <span className="opt-icon">{o.icon}</span>
+                    <span className="opt-icon">
+                      <Icon name={OPTION_ICON[o.key] ?? "leaf"} size={20} />
+                    </span>
                     <span className="opt-name">{o.name}</span>
                     {o.recommended && <span className="opt-badge">Recommended</span>}
                   </div>

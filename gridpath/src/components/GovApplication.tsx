@@ -5,6 +5,7 @@ import { formatUsd } from "@/lib/cost";
 import { computeGrantOffer } from "@/lib/grants";
 import { buildApplicationPdf, type GovFormData } from "@/lib/pdf";
 import type { ConnectionEstimate, PropertyType } from "@/lib/types";
+import Icon from "@/components/Icon";
 import GrantsOffer from "./GrantsOffer";
 
 const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
@@ -116,7 +117,7 @@ export default function GovApplication({
   if (reference) {
     return (
       <div className="confirm">
-        <div className="check">✓</div>
+        <div className="check"><Icon name="check" size={32} /></div>
         <h3>Application Form GP-100 generated</h3>
         <p>
           Your reference is <span className="code">{reference}</span>.<br />
@@ -129,7 +130,7 @@ export default function GovApplication({
           and confirm your connection.
         </p>
         <button className="btn" style={{ marginTop: 18 }} onClick={() => generatePdf(reference)}>
-          ⬇ Download PDF again
+          <Icon name="download" size={16} /> Download PDF again
         </button>
         <button className="btn secondary" style={{ marginTop: 10 }} onClick={onBack}>
           Back to estimate
@@ -193,8 +194,14 @@ export default function GovApplication({
       <GrantsOffer estimate={estimate} propertyType={propertyType} offer={offer} />
 
       {error && <div className="error">{error}</div>}
-      <button className="btn" type="submit" disabled={submitting}>
-        {submitting ? "Generating…" : "⬇ Generate & download application PDF"}
+      <button className="btn gold" type="submit" disabled={submitting}>
+        {submitting ? (
+          "Generating…"
+        ) : (
+          <>
+            <Icon name="download" size={16} /> Generate &amp; download application PDF
+          </>
+        )}
       </button>
       <button className="btn secondary" type="button" onClick={onBack} disabled={submitting}>
         Back to estimate

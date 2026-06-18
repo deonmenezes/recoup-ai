@@ -9,6 +9,7 @@ import GrantsOffer from "@/components/GrantsOffer";
 import CallButton from "@/components/CallButton";
 import CleanEnergyPlanView from "@/components/CleanEnergyPlan";
 import { LogoFull } from "@/components/Logo";
+import Icon from "@/components/Icon";
 import { formatUsd } from "@/lib/cost";
 import { DEMO_ADDRESS } from "@/lib/fixtures";
 import type { ConnectionEstimate, GeocodeResult, ServiceMode, WireScenario } from "@/lib/types";
@@ -111,7 +112,7 @@ export default function AppPage() {
       <nav className="app-nav">
         <div className="app-nav-left">
           <Link href="/" className="back-link" aria-label="Back to home">
-            ← Back
+            <Icon name="back" size={16} /> Back
           </Link>
           <Link href="/" className="app-nav-brand" aria-label="GridPath home">
             <LogoFull size={30} tagline={false} />
@@ -139,11 +140,11 @@ export default function AppPage() {
             {!selected ? (
               <div className="demo-hint">
                 Works for any U.S. address.{" "}
-                <button onClick={useDemo}>Try a demo address →</button>
+                <button onClick={useDemo}>Try a demo address <Icon name="arrow-right" size={13} /></button>
               </div>
             ) : (
               <div className="found">
-                <span className="found-check">✓</span>
+                <span className="found-check"><Icon name="check" size={16} /></span>
                 <div>
                   <strong>Address found!</strong>
                   <div className="found-addr">{selected.label}</div>
@@ -174,7 +175,7 @@ export default function AppPage() {
                         className={wireScenario === "standard" ? "active" : ""}
                         onClick={() => changeWireScenario("standard")}
                       >
-                        <div className="wt-icon">🔌</div>
+                        <div className="wt-icon"><Icon name="plug" size={20} /></div>
                         <div className="wt-name">Standard service</div>
                         <div className="wt-sub">Run a new line — wire length applies</div>
                       </button>
@@ -182,7 +183,7 @@ export default function AppPage() {
                         className={wireScenario === "house" ? "active" : ""}
                         onClick={() => changeWireScenario("house")}
                       >
-                        <div className="wt-icon">🏠</div>
+                        <div className="wt-icon"><Icon name="house" size={20} /></div>
                         <div className="wt-name">House connection</div>
                         <div className="wt-sub">Connect at the pole — no wire run</div>
                       </button>
@@ -191,7 +192,7 @@ export default function AppPage() {
 
                   <div className="stack-cards">
                     <div className="scard">
-                      <div className="scard-icon green">📏</div>
+                      <div className="scard-icon green"><Icon name="ruler" size={22} /></div>
                       <div>
                         <div className="scard-k">Distance to Grid</div>
                         <div className="scard-v">
@@ -203,7 +204,7 @@ export default function AppPage() {
                       </div>
                     </div>
                     <div className="scard">
-                      <div className="scard-icon amber">$</div>
+                      <div className="scard-icon amber"><Icon name="dollar" size={22} /></div>
                       <div>
                         <div className="scard-k">Estimated Cost</div>
                         <div className="scard-v cost">
@@ -212,7 +213,7 @@ export default function AppPage() {
                       </div>
                     </div>
                     <div className="scard">
-                      <div className="scard-icon purple">◷</div>
+                      <div className="scard-icon purple"><Icon name="clock" size={22} /></div>
                       <div>
                         <div className="scard-k">Estimated Timeline</div>
                         <div className="scard-v">{estimate.estimatedTimeline.label}</div>
@@ -227,10 +228,10 @@ export default function AppPage() {
 
                   <GrantsOffer estimate={estimate} />
 
-                  <button className="btn" onClick={() => setStep("apply")}>
-                    Apply for grants & connect →
+                  <button className="btn gold" onClick={() => setStep("apply")}>
+                    Apply for grants & connect <Icon name="arrow-right" size={16} />
                   </button>
-                  <div className="takes">🔒 Auto-fills your government application · downloads a PDF</div>
+                  <div className="takes"><Icon name="lock" size={14} /> Auto-fills your government application · downloads a PDF</div>
                 </>
               )}
 
@@ -259,11 +260,11 @@ export default function AppPage() {
             <MapView estimate={estimate} />
           )}
 
-          <div className="map-top-left">📍 {place}</div>
+          <div className="map-top-left"><Icon name="pin" size={17} /> {place}</div>
 
           <div className="map-top-right">
             <button className="pill" onClick={() => setShowWhy((v) => !v)}>
-              ⓘ Why this estimate?
+              <Icon name="info" size={15} /> Why this estimate?
             </button>
           </div>
 
@@ -279,7 +280,7 @@ export default function AppPage() {
             <div className="map-bottom">
               <div className="mb-col">
                 <div className="mb-title">Nearest Connection</div>
-                <div className="mb-illus">🗼</div>
+                <div className="mb-illus"><Icon name="tower" size={22} /></div>
                 <div className="mb-strong">{connectionName(estimate)}</div>
                 <div className="mb-sub">
                   {estimate.mode === "underground" ? "Underground Line" : "Overhead Line"}
@@ -293,7 +294,7 @@ export default function AppPage() {
                     className={mode === "overhead" ? "active" : ""}
                     onClick={() => changeMode("overhead")}
                   >
-                    <div className="ct-icon">🗼</div>
+                    <div className="ct-icon"><Icon name="tower" size={20} /></div>
                     <div className="ct-name">Overhead</div>
                     <div className="ct-rate">$20/ft</div>
                     {mode === "overhead" && <div className="ct-default">default</div>}
@@ -302,7 +303,7 @@ export default function AppPage() {
                     className={mode === "underground" ? "active" : ""}
                     onClick={() => changeMode("underground")}
                   >
-                    <div className="ct-icon">⬓</div>
+                    <div className="ct-icon"><Icon name="plug" size={20} /></div>
                     <div className="ct-name">Underground</div>
                     <div className="ct-rate">$60/ft</div>
                   </button>
@@ -340,7 +341,7 @@ export default function AppPage() {
               </div>
 
               <div className="mb-callout">
-                <div className="callout-art">🌅</div>
+                <div className="callout-art"><Icon name="leaf" size={22} /></div>
                 <em>Clean energy starts with clear connections.</em>
               </div>
             </div>
@@ -350,7 +351,7 @@ export default function AppPage() {
 
       <footer className="footer">
         <div className="foot-left">
-          🛡 Estimates are based on public data and simple assumptions. Actual costs and
+          <Icon name="info" size={14} /> Estimates are based on public data and simple assumptions. Actual costs and
           timelines vary by utility.
         </div>
         <div className="foot-mid">

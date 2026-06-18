@@ -5,7 +5,7 @@ struct GridPathApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .tint(.gpForest)
+                .tint(.gpGreen)
                 .preferredColorScheme(.light)
         }
     }

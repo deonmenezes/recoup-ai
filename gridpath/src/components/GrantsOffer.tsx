@@ -1,6 +1,7 @@
 "use client";
 
 import { formatUsd } from "@/lib/cost";
+import Icon from "@/components/Icon";
 import { computeGrantOffer } from "@/lib/grants";
 import type { ConnectionEstimate, GrantOffer, PropertyType } from "@/lib/types";
 
@@ -25,7 +26,10 @@ export default function GrantsOffer({
   return (
     <div className="offer">
       <div className="offer-head">
-        <span className="offer-eyebrow">💸 Your offer & available grants</span>
+        <span className="offer-eyebrow">
+          <span className="off-tile"><Icon name="money" size={16} /></span>
+          Your offer &amp; available grants
+        </span>
         <span className="offer-save">Save {offer.percentOff}%</span>
       </div>
 
@@ -34,7 +38,7 @@ export default function GrantsOffer({
           <span className="offer-k">Connection offer</span>
           <span className="offer-strike">{formatUsd(offer.gross)}</span>
         </div>
-        <div className="offer-arrow">→</div>
+        <div className="offer-arrow"><Icon name="arrow-right" size={18} /></div>
         <div className="offer-net">
           <span className="offer-k">Your cost after grants</span>
           <span className="offer-net-v">{formatUsd(offer.net)}</span>

@@ -19,10 +19,10 @@ struct GridMapView: View {
                 MapPolyline(coordinates: [e.coordinate, e.nearest.coordinate])
                     .stroke(Color.gpGold, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                 Annotation("Your Property", coordinate: e.coordinate) {
-                    pin(system: "house.fill", bg: .gpForest)
+                    pin(system: "house.fill", bg: .gpGreen)
                 }
                 Annotation(e.connectionName, coordinate: e.nearest.coordinate) {
-                    pin(system: "bolt.fill", bg: .gpTerracotta)
+                    pin(system: "bolt.fill", bg: .gpGold)
                 }
             }
         }
@@ -33,12 +33,12 @@ struct GridMapView: View {
 
     private func pin(system: String, bg: Color) -> some View {
         Image(systemName: system)
-            .font(.system(size: 13, weight: .bold))
-            .foregroundStyle(.white)
-            .frame(width: 32, height: 32)
-            .background(bg, in: Circle())
-            .overlay(Circle().strokeBorder(.white, lineWidth: 2.5))
-            .shadow(color: .black.opacity(0.3), radius: 3, y: 1)
+            .font(.system(size: 15, weight: .heavy))
+            .foregroundStyle(Color.gpInk)
+            .frame(width: 36, height: 36)
+            .background(bg, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.gpInk, lineWidth: 3))
+            .shadow(color: .gpInk, radius: 0, x: 3, y: 3)
     }
 
     private func fly() {

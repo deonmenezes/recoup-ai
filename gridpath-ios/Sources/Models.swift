@@ -33,7 +33,7 @@ enum WireScenario: String, CaseIterable {
             ? "Connect at the existing pole/meter — no wire run needed."
             : "Run a new service line to the property."
     }
-    var icon: String { self == .house ? "🏠" : "🔌" }
+    var icon: String { self == .house ? "house.fill" : "powerplug.fill" }
 }
 
 struct GeocodeResult: Identifiable, Equatable {
