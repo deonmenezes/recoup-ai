@@ -4,13 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import AddressSearch from "@/components/AddressSearch";
-import ApplicationForm from "@/components/ApplicationForm";
+import GovApplication from "@/components/GovApplication";
+import GrantsOffer from "@/components/GrantsOffer";
 import CallButton from "@/components/CallButton";
 import CleanEnergyPlanView from "@/components/CleanEnergyPlan";
 import { LogoFull } from "@/components/Logo";
 import { formatUsd } from "@/lib/cost";
 import { DEMO_ADDRESS } from "@/lib/fixtures";
-import type { ConnectionEstimate, GeocodeResult, ServiceMode } from "@/lib/types";
+import type { ConnectionEstimate, GeocodeResult, ServiceMode, WireScenario } from "@/lib/types";
 
 const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -27,6 +28,7 @@ export default function AppPage() {
   const [address, setAddress] = useState("");
   const [selected, setSelected] = useState<GeocodeResult | null>(null);
   const [mode, setMode] = useState<ServiceMode>("overhead");
+  const [wireScenario, setWireScenario] = useState<WireScenario>("standard");
   const [estimate, setEstimate] = useState<ConnectionEstimate | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,14 +38,14 @@ export default function AppPage() {
 
   const useGoogle = Boolean(GOOGLE_KEY) && !google3dFailed;
 
-  const runEstimate = useCallback(async (sel: GeocodeResult, m: ServiceMode) => {
+  const runEstimate = useCallback(async (sel: GeocodeResult, m: ServiceMode, w: WireScenario) => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/grid", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: sel.label, lat: sel.lat, lon: sel.lon, mode: m }),
+        body: JSON.stringify({ address: sel.label, lat: sel.lat, lon: sel.lon, mode: m, wireScenario: w }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to estimate");
@@ -60,7 +62,7 @@ export default function AppPage() {
     setSelected(r);
     setAddress(r.label);
     setStep("estimate");
-    runEstimate(r, mode);
+    runEstimate(r, mode, wireScenario);
   }
 
   function handleClear() {
@@ -73,7 +75,12 @@ export default function AppPage() {
 
   function changeMode(m: ServiceMode) {
     setMode(m);
-    if (selected) runEstimate(selected, m);
+    if (selected) runEstimate(selected, m, wireScenario);
+  }
+
+  function changeWireScenario(w: WireScenario) {
+    setWireScenario(w);
+    if (selected) runEstimate(selected, mode, w);
   }
 
   const useDemo = useCallback(() => {
@@ -81,7 +88,9 @@ export default function AppPage() {
     setSelected(demo);
     setAddress(demo.label);
     setStep("estimate");
-    runEstimate(demo, "overhead");
+    setMode("overhead");
+    setWireScenario("standard");
+    runEstimate(demo, "overhead", "standard");
   }, [runEstimate]);
 
   // Auto-load the demo address when ?demo is present (handy for a live pitch).
@@ -158,6 +167,28 @@ export default function AppPage() {
 
               {!loading && !error && estimate && step === "estimate" && (
                 <>
+                  <div className="wire-toggle">
+                    <div className="wire-toggle-label">Connection scenario</div>
+                    <div className="wire-toggle-btns">
+                      <button
+                        className={wireScenario === "standard" ? "active" : ""}
+                        onClick={() => changeWireScenario("standard")}
+                      >
+                        <div className="wt-icon">🔌</div>
+                        <div className="wt-name">Standard service</div>
+                        <div className="wt-sub">Run a new line — wire length applies</div>
+                      </button>
+                      <button
+                        className={wireScenario === "house" ? "active" : ""}
+                        onClick={() => changeWireScenario("house")}
+                      >
+                        <div className="wt-icon">🏠</div>
+                        <div className="wt-name">House connection</div>
+                        <div className="wt-sub">Connect at the pole — no wire run</div>
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="stack-cards">
                     <div className="scard">
                       <div className="scard-icon green">📏</div>
@@ -194,15 +225,17 @@ export default function AppPage() {
                     <div className="fixture-badge">Demo data (live grid lookup unavailable)</div>
                   )}
 
+                  <GrantsOffer estimate={estimate} />
+
                   <button className="btn" onClick={() => setStep("apply")}>
-                    Start Application →
+                    Apply for grants & connect →
                   </button>
-                  <div className="takes">🔒 Takes 1–2 minutes</div>
+                  <div className="takes">🔒 Auto-fills your government application · downloads a PDF</div>
                 </>
               )}
 
               {!loading && !error && estimate && step === "apply" && (
-                <ApplicationForm estimate={estimate} onBack={() => setStep("estimate")} />
+                <GovApplication estimate={estimate} onBack={() => setStep("estimate")} />
               )}
             </div>
           )}

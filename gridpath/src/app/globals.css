@@ -1390,3 +1390,215 @@ button {
     display: none;
   }
 }
+
+/* ---------- Wire-scenario toggle (house vs standard) ---------- */
+.wire-toggle {
+  margin-bottom: 16px;
+}
+.wire-toggle-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+.wire-toggle-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.wire-toggle-btns button {
+  background: white;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 12px 11px;
+  text-align: left;
+  transition: all 0.15s;
+}
+.wire-toggle-btns button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 2px 10px rgba(47, 74, 60, 0.12);
+}
+.wt-icon {
+  font-size: 20px;
+}
+.wt-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  margin-top: 4px;
+  color: var(--ink);
+}
+.wt-sub {
+  font-size: 11px;
+  color: var(--ink-muted);
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+/* ---------- Grants & offer panel ---------- */
+.offer {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1.5px solid var(--accent-soft);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, #f4f8f3 0%, var(--panel) 100%);
+}
+.offer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.offer-eyebrow {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--forest);
+}
+.offer-save {
+  font-size: 12px;
+  font-weight: 800;
+  color: #6b4e09;
+  background: var(--gold);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.offer-prices {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.offer-k {
+  display: block;
+  font-size: 10.5px;
+  color: var(--ink-muted);
+  margin-bottom: 2px;
+}
+.offer-strike {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  text-decoration: line-through;
+}
+.offer-arrow {
+  font-size: 18px;
+  color: var(--forest);
+}
+.offer-net-v {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--forest);
+}
+.grant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.grant {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.grant-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.grant-auth {
+  font-size: 11px;
+  color: var(--forest);
+  font-weight: 600;
+}
+.grant-detail {
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-top: 1px;
+  line-height: 1.35;
+}
+.grant-amount {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--forest);
+  white-space: nowrap;
+}
+.grant-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1.5px dashed var(--line);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.grant-total-v {
+  color: var(--forest);
+  font-weight: 800;
+}
+.offer-note {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--ink-muted);
+  line-height: 1.4;
+}
+
+/* ---------- Government application (auto-filled) ---------- */
+.gov-form .green,
+.offer .green {
+  color: var(--forest);
+}
+.gov-auto {
+  position: relative;
+  padding: 14px;
+  border: 1.5px solid var(--accent-soft);
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+.gov-auto-badge {
+  position: absolute;
+  top: -9px;
+  left: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: white;
+  background: var(--forest);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+.gov-auto-row {
+  margin-top: 4px;
+}
+.gov-auto-row span,
+.gov-auto-grid span {
+  display: block;
+  font-size: 10.5px;
+  color: var(--ink-muted);
+}
+.gov-auto-row strong {
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.gov-auto-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+.gov-auto-grid strong {
+  font-size: 13px;
+  color: var(--ink);
+}

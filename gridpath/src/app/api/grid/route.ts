@@ -2,13 +2,14 @@
 
 import { NextResponse } from "next/server";
 import { buildEstimate } from "@/lib/estimate";
-import type { ServiceMode } from "@/lib/types";
+import type { ServiceMode, WireScenario } from "@/lib/types";
 
 interface GridRequest {
   address?: string;
   lat?: number;
   lon?: number;
   mode?: ServiceMode;
+  wireScenario?: WireScenario;
 }
 
 export async function POST(request: Request) {
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
 
   const { address, lat, lon } = body;
   const mode: ServiceMode = body.mode === "underground" ? "underground" : "overhead";
+  const wireScenario: WireScenario = body.wireScenario === "house" ? "house" : "standard";
 
   if (typeof lat !== "number" || typeof lon !== "number" || !address) {
     return NextResponse.json(
@@ -30,7 +32,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const estimate = await buildEstimate({ address, lat, lon, mode });
+    const estimate = await buildEstimate({ address, lat, lon, mode, wireScenario });
     if (!estimate) {
       return NextResponse.json(
         { error: "No grid infrastructure found near this address." },

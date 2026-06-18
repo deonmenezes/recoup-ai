@@ -1,0 +1,151 @@
+default_platform(:ios)
+
+# GridPath iOS — mirrors the proven TechScroll signing recipe (fastlane + ASC API key).
+KEY_ID    = "PKRJR56447"
+ISSUER_ID = "cacd4f89-0613-479c-ac4d-09ffea7d7a45"
+KEY_PATH  = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_PKRJR56447.p8")
+APP_ID    = "com.deonmenezes.gridpath"
+TEAM_ID   = "Q4MU4GRWRD"
+PROFILE   = "GridPath AppStore"
+# Valid keychain distribution identity (team is at the 2-cert limit — reuse it, don't mint).
+CERT_ID   = "USCKLYK64F"
+
+platform :ios do
+  desc "Regenerate the Xcode project from project.yml"
+  lane :gen do
+    Dir.chdir("..") { sh("xcodegen generate") }
+  end
+
+  desc "Archive with App Store signing (API key) and upload to TestFlight"
+  lane :beta do
+    Dir.chdir("..") { sh("xcodegen generate") }
+
+    api_key = app_store_connect_api_key(
+      key_id: KEY_ID, issuer_id: ISSUER_ID, key_filepath: KEY_PATH
+    )
+
+    # Pin a provisioning profile to the existing distribution cert. `cert` is
+    # intentionally skipped (team at 2-cert limit). Requires the app record +
+    # bundle ID to already exist — run `fastlane produce` first (see README).
+    sigh(
+      api_key: api_key,
+      app_identifier: APP_ID,
+      team_id: TEAM_ID,
+      provisioning_name: PROFILE,
+      cert_id: CERT_ID,
+      force: true
+    )
+
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "GridPath.xcodeproj",
+      team_id: TEAM_ID,
+      code_sign_identity: "Apple Distribution",
+      bundle_identifier: APP_ID,
+      profile_name: PROFILE,
+      targets: ["GridPath"]
+    )
+
+    build_app(
+      project: "GridPath.xcodeproj",
+      scheme: "GridPath",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build",
+      output_name: "GridPath.ipa",
+      export_options: { provisioningProfiles: { APP_ID => PROFILE } }
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Show TestFlight build state + beta groups + testers"
+  lane :tf_info do
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: KEY_ID, issuer_id: ISSUER_ID, filepath: KEY_PATH
+    )
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+    builds = app.get_builds(sort: "-uploadedDate", limit: 3)
+    builds.each { |b| UI.message("BUILD v#{b.version} state=#{b.processing_state} uploaded=#{b.uploaded_date}") }
+    app.get_beta_groups.each do |g|
+      UI.message("GROUP name=#{g.name} internal=#{g.is_internal_group} id=#{g.id}")
+    end
+  end
+
+  desc "Create internal group, add tester, attach latest build (raw ASC API)"
+  lane :distribute do |options|
+    require "jwt"; require "json"; require "net/http"; require "uri"; require "openssl"
+    email = options[:email] || "deonmenezes04@gmail.com"
+    key = OpenSSL::PKey::EC.new(File.read(KEY_PATH))
+    now = Time.now.to_i
+    jwt = JWT.encode({ iss: ISSUER_ID, iat: now, exp: now + 1000, aud: "appstoreconnect-v1" },
+                     key, "ES256", { kid: KEY_ID, typ: "JWT" })
+    base = "https://api.appstoreconnect.apple.com/v1"
+    call = lambda do |method, path, body = nil|
+      uri = URI(path.start_with?("http") ? path : "#{base}/#{path}")
+      klass = { get: Net::HTTP::Get, post: Net::HTTP::Post, patch: Net::HTTP::Patch }[method]
+      req = klass.new(uri)
+      req["Authorization"] = "Bearer #{jwt}"; req["Content-Type"] = "application/json"
+      req.body = body.to_json if body
+      res = Net::HTTP.start(uri.host, 443, use_ssl: true) { |h| h.request(req) }
+      parsed = (res.body && !res.body.empty?) ? (JSON.parse(res.body) rescue { "raw" => res.body }) : {}
+      [res.code.to_i, parsed]
+    end
+
+    appid = call.call(:get, "apps?filter[bundleId]=#{APP_ID}")[1].dig("data", 0, "id")
+    UI.user_error!("App not found") unless appid
+
+    buildrec = call.call(:get, "builds?filter[app]=#{appid}&sort=-uploadedDate&limit=1")[1].dig("data", 0)
+    build_id = buildrec&.dig("id")
+    UI.message("Build #{buildrec&.dig('attributes','version')} state=#{buildrec&.dig('attributes','processingState')} id=#{build_id}")
+
+    # Find or create an internal group (only name + isInternalGroup — avoids the public-link bug).
+    groups = call.call(:get, "apps/#{appid}/betaGroups")[1]["data"] || []
+    gid = groups.find { |g| g.dig("attributes", "isInternalGroup") }&.dig("id")
+    if gid
+      UI.message("Existing internal group #{gid}")
+    else
+      code, body = call.call(:post, "betaGroups", { data: {
+        type: "betaGroups", attributes: { name: "Internal Testers", isInternalGroup: true },
+        relationships: { app: { data: { type: "apps", id: appid } } }
+      } })
+      gid = body.dig("data", "id")
+      UI.message("Created internal group #{gid} (#{code})")
+    end
+    UI.user_error!("No group") unless gid
+
+    # Attach build to group.
+    code, _ = call.call(:post, "betaGroups/#{gid}/relationships/builds", { data: [{ type: "builds", id: build_id }] })
+    UI.message("Attach build -> #{code}")
+
+    # Add internal tester.
+    code, body = call.call(:post, "betaTesters", { data: {
+      type: "betaTesters", attributes: { email: email, firstName: "Deon", lastName: "Menezes" },
+      relationships: { betaGroups: { data: [{ type: "betaGroups", id: gid }] } }
+    } })
+    UI.message("Add tester #{email} -> #{code}")
+    UI.error(body.to_json[0, 300]) unless [200, 201].include?(code)
+    UI.success("DISTRIBUTE_DONE group=#{gid} build=#{build_id}")
+  end
+
+  desc "Build a signed .ipa only (no upload)"
+  lane :build_only do
+    Dir.chdir("..") { sh("xcodegen generate") }
+    api_key = app_store_connect_api_key(key_id: KEY_ID, issuer_id: ISSUER_ID, key_filepath: KEY_PATH)
+    sigh(api_key: api_key, app_identifier: APP_ID, team_id: TEAM_ID,
+         provisioning_name: PROFILE, cert_id: CERT_ID, force: true)
+    update_code_signing_settings(
+      use_automatic_signing: false, path: "GridPath.xcodeproj", team_id: TEAM_ID,
+      code_sign_identity: "Apple Distribution", bundle_identifier: APP_ID,
+      profile_name: PROFILE, targets: ["GridPath"]
+    )
+    build_app(
+      project: "GridPath.xcodeproj", scheme: "GridPath", configuration: "Release",
+      export_method: "app-store", output_directory: "build", output_name: "GridPath.ipa",
+      export_options: { provisioningProfiles: { APP_ID => PROFILE } }
+    )
+  end
+end

@@ -1,0 +1,38 @@
+name: GridPath
+options:
+  bundleIdPrefix: com.deonmenezes
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "3"
+    DEVELOPMENT_TEAM: Q4MU4GRWRD
+    SWIFT_VERSION: "5.0"
+targets:
+  GridPath:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+      - Resources
+    info:
+      path: GridPath/Info.plist
+      properties:
+        CFBundleDisplayName: GridPath
+        CFBundleIconName: AppIcon
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "3"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIStatusBarStyle: UIStatusBarStyleDarkContent
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.deonmenezes.gridpath
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO

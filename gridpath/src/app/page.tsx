@@ -166,8 +166,8 @@ export default function Landing() {
           </div>
           <div className="feature">
             <span className="f-icon">⚡</span>
-            <h3>One click to apply</h3>
-            <p>Go from "I have an address" to "I've started my connection application" in minutes.</p>
+            <h3>Grants + one-click apply</h3>
+            <p>We stack the grants you qualify for to cut the cost, then auto-fill your government application and hand you a ready-to-file PDF.</p>
           </div>
         </div>
       </section>
