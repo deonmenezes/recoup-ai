@@ -47,6 +47,14 @@ Show TestFlight build state + beta groups + testers
 
 Create internal group, add tester, attach latest build (raw ASC API)
 
+### ios verify_tester
+
+```sh
+[bundle exec] fastlane ios verify_tester
+```
+
+Deliver the latest build to a tester: internal if they're a team user, else external group + beta review
+
 ### ios build_only
 
 ```sh
