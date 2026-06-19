@@ -1,5 +1,4 @@
-// GridPath logo — a bold neobrutalist mark: a chunky lightning bolt over a grid,
-// flat green + gold fills with thick black outlines and hard edges.
+// GridPath logo - a neobrutalist route-bolt hopping through grid nodes.
 
 export function LogoMark({ size = 40 }: { size?: number }) {
   return (
@@ -11,21 +10,50 @@ export function LogoMark({ size = 40 }: { size?: number }) {
       aria-hidden="true"
       style={{ display: "block" }}
     >
-      {/* solid green tile with thick black border + hard offset shadow */}
-      <rect x="9" y="9" width="48" height="48" rx="11" fill="#141414" />
+      <rect x="10" y="10" width="48" height="48" rx="11" fill="#141414" />
       <rect x="6" y="6" width="48" height="48" rx="11" fill="#1E7A4D" stroke="#141414" strokeWidth="3.5" />
-      {/* faint grid lines on the tile */}
-      <g stroke="#16613D" strokeWidth="2.4" strokeLinecap="round">
-        <path d="M20 13v34M34 13v34" />
-        <path d="M13 22h34M13 37h34" />
+
+      <g stroke="#186040" strokeWidth="2.25" strokeLinecap="round">
+        <path d="M18 18H46M18 31H46M18 44H36" />
+        <path d="M18 18V44M31 18V44M44 18V31" />
       </g>
-      {/* bold gold lightning bolt */}
+
+      <g fill="#CFE0CE" stroke="#141414" strokeWidth="2.25">
+        <circle cx="44" cy="18" r="3.15" />
+        <circle cx="18" cy="31" r="3.15" />
+        <circle cx="18" cy="44" r="3.15" />
+        <circle cx="31" cy="44" r="3.15" />
+      </g>
+
       <path
-        d="M33 12 17 35h11l-3 17 19-25H31l5-15Z"
-        fill="#F5C518"
+        d="M18 18H31L25 31H41L32 46L48 30"
         stroke="#141414"
-        strokeWidth="3.2"
+        strokeWidth="10"
+        strokeLinecap="round"
         strokeLinejoin="round"
+      />
+      <path
+        d="M18 18H31L25 31H41L32 46L48 30"
+        stroke="#F5C518"
+        strokeWidth="5.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      <g fill="#F5C518" stroke="#141414" strokeWidth="3">
+        <circle cx="18" cy="18" r="4" />
+        <circle cx="31" cy="18" r="4" />
+        <circle cx="25" cy="31" r="4" />
+        <circle cx="41" cy="31" r="4" />
+        <circle cx="32" cy="46" r="4" />
+      </g>
+      <circle cx="48" cy="30" r="6.25" fill="#F5C518" stroke="#141414" strokeWidth="3.3" />
+      <circle cx="48" cy="30" r="2" fill="#FCFBF5" />
+      <path
+        d="M48 22.4V18.7M55.6 30H59.3M42.6 35.4 40.1 37.9"
+        stroke="#141414"
+        strokeWidth="2.6"
+        strokeLinecap="round"
       />
     </svg>
   );
