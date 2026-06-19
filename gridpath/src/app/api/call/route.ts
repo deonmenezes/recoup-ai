@@ -19,7 +19,6 @@ import {
   toTwiml,
 } from "@/lib/voicebrief";
 import { hasNvidia } from "@/lib/nemotron";
-import { formatUsd } from "@/lib/cost";
 
 interface CallRequest {
   phone?: string;
@@ -112,11 +111,15 @@ export async function POST(request: Request) {
     const conversational = hasNvidia() && Boolean(publicBase);
 
     const place = address.split(",")[0]?.trim() || "your location";
+    // Warm, consent-seeking opener — Riley names the three things she has but
+    // doesn't dump the figures; she walks through them conversationally (one at
+    // a time) once the caller says yes. The exact numbers live in `facts`, which
+    // the agent's prompt references. Used as the ElevenLabs `first_message`
+    // ({{greeting}}) and as the opening line for the Nemotron fallback path.
     const greeting =
-      `Hi! This is Riley from GridPath with the rundown on ${place}. ` +
-      `The nearest grid connection is about ${estimate.distanceFeet} feet away, ` +
-      `the estimated cost to connect is ${formatUsd(estimate.estimatedCost.total)}, ` +
-      `and the timeline is ${estimate.estimatedTimeline.label}.`;
+      `Hey, it's Riley from GridPath! So you just pulled up ${place} — ` +
+      `I've got your grid connection estimate right here: the distance, the cost, ` +
+      `and the timeline. Want me to run through it?`;
 
     // Preferred path: ElevenLabs Conversational AI over Twilio — a real-time,
     // natural two-way voice agent ("Riley"). The location facts are injected as
