@@ -1,4 +1,0 @@
-app_identifier("com.deonmenezes.gridpath")
-team_id("Q4MU4GRWRD")
-# apple_id is only needed for `fastlane produce` (app-record creation, interactive 2FA).
-# Pass it on the command line: fastlane produce -u you@appleid.com ...
