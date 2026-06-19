@@ -1,0 +1,1 @@
+grid,solar,clean energy,utility,connection,grant,rebate,off grid,heat pump,battery,EV charging

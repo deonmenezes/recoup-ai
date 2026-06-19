@@ -80,9 +80,7 @@ struct GovApplicationView: View {
             }
         }
         .padding(14)
-        .background(Color.gpSage, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.gpInk, lineWidth: 3))
-        .hardShadow(5)
+        .background(NeoLayeredBackground(fill: .gpSage, radius: 12, border: 3, shadow: 5))
     }
 
     private func autoCell(_ k: String, _ v: String, color: Color = .gpInk) -> some View {
@@ -154,9 +152,7 @@ struct GovApplicationView: View {
                 }
                 .font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(.white)
                 .frame(maxWidth: .infinity).padding(.vertical, 15).padding(.horizontal, 16)
-                .background(Color.gpGreen, in: RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.gpInk, lineWidth: 3))
-                .hardShadow(5)
+                .background(NeoLayeredBackground(fill: .gpGreen, radius: 12, border: 3, shadow: 5))
             }
             Button("Edit details") { pdfURL = nil }
                 .buttonStyle(NeoButtonStyle(fill: .gpCard, textColor: .gpInk))

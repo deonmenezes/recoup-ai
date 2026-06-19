@@ -55,6 +55,54 @@ Create internal group, add tester, attach latest build (raw ASC API)
 
 Deliver the latest build to a tester: internal if they're a team user, else external group + beta review
 
+### ios finalize_appstore
+
+```sh
+[bundle exec] fastlane ios finalize_appstore
+```
+
+Raw-API prep: attach latest VALID build, content rights, age rating (4+), upload screenshots
+
+### ios age_rating
+
+```sh
+[bundle exec] fastlane ios age_rating
+```
+
+Set the app age rating to 4+ via the fastlane update_app_age_rating action (new ASC age-rating API)
+
+### ios set_age_rating
+
+```sh
+[bundle exec] fastlane ios set_age_rating
+```
+
+Raw-API: set the age-rating declaration (4+, all None) via the live relationship id
+
+### ios submit_review
+
+```sh
+[bundle exec] fastlane ios submit_review
+```
+
+Raw-API: create a review submission for the editable version and submit (surfaces blockers)
+
+### ios upload_meta
+
+```sh
+[bundle exec] fastlane ios upload_meta
+```
+
+Upload App Store metadata + screenshots to the editable version (no binary, no submit)
+
+### ios asc_status
+
+```sh
+[bundle exec] fastlane ios asc_status
+```
+
+Dump App Store Connect state: app, versions+states, builds, agreements signal
+
 ### ios build_only
 
 ```sh

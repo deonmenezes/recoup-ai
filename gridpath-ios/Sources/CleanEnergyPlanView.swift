@@ -113,8 +113,6 @@ struct CleanEnergyPlanView: View {
             Text(plan.bundleNote).font(.system(size: 12, weight: .medium)).foregroundStyle(Color.gpInkMuted).lineSpacing(1)
         }
         .padding(14)
-        .background(Color.gpGold, in: RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.gpInk, lineWidth: 3))
-        .hardShadow(3)
+        .background(NeoLayeredBackground(fill: .gpGold, radius: 10, border: 3, shadow: 3))
     }
 }

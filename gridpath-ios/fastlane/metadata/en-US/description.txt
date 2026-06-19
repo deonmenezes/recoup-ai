@@ -1,0 +1,13 @@
+GridPath turns getting connected to the electric grid into a 30-second lookup. Type any U.S. address and instantly see three honest numbers: how far the nearest grid connection is, what it costs to connect, and how long it takes.
+
+Then GridPath does something utilities never do — it stacks the government grants and rebates you may qualify for (USDA REAP, federal Grid Resilience funding, state line-extension cost-share, and low-to-moderate-income subsidies) to show a much lower net price. A large connection bill can drop dramatically once assistance is applied.
+
+Choose how you connect: a house connection straight onto the existing pole and meter, or a standard service line where the wire length drives the cost. Compare overhead versus underground with a tap.
+
+When you are ready, GridPath auto-fills your government service-connection application (Form GP-100) from the address and estimate, and generates a ready-to-file PDF you can save or share.
+
+Finally, get a clean-energy plan for the property — rooftop solar, battery, heat pump, and EV charging — with real costs, savings, payback, and incentives.
+
+GridPath runs on open map data and transparent math. Every dollar traces back to one measured number: your distance to the grid. No black box.
+
+Estimates and grant amounts are illustrative and based on public data; actual figures vary by utility and program eligibility.

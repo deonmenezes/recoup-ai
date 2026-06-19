@@ -302,10 +302,8 @@ struct NeoSegmented<Value: Equatable>: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12).padding(.horizontal, 8)
                     .foregroundStyle(active ? activeText : Color.gpInk)
-                    .background(active ? activeFill : Color.white, in: RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.gpInk, lineWidth: 3))
-                    // ACTIVE = pressed look (no shadow); INACTIVE = raised hard shadow.
-                    .shadow(color: .gpInk, radius: 0, x: active ? 0 : 3, y: active ? 0 : 3)
+                    // ACTIVE = pressed look (shadow collapses); INACTIVE = raised hard shadow.
+                    .background(NeoLayeredBackground(fill: active ? activeFill : Color.white, radius: 10, border: 3, shadow: active ? 0 : 3))
                     .offset(x: active ? 3 : 0, y: active ? 3 : 0)
                 }
                 .buttonStyle(.plain)

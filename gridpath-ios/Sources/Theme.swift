@@ -37,7 +37,10 @@ extension Font {
 // MARK: - Hard offset shadow + neobrutalist card
 
 extension View {
-    /// Hard offset shadow (radius 0 = no blur).
+    /// Hard offset shadow (radius 0 = no blur). For OPAQUE shapes/images only.
+    /// Do NOT use on text-containing views — it shadows the glyphs and produces a
+    /// ghosted/doubled-text look. For surfaces use neoCard/neoSurface (which draw
+    /// the shadow as a solid offset rectangle BEHIND the content instead).
     func hardShadow(_ offset: CGFloat = 5) -> some View {
         shadow(color: .gpInk, radius: 0, x: offset, y: offset)
     }
@@ -55,6 +58,24 @@ extension View {
     }
 }
 
+/// Layered neobrutalist background: a SOLID offset shadow rectangle + flat fill +
+/// thick border, all pure shapes. Used as a `.background(...)` so the hard shadow
+/// is cast by a shape (never by the foreground text), avoiding the ghosted/
+/// doubled-text artifact that `.shadow` on a text-containing view produces.
+struct NeoLayeredBackground: View {
+    var fill: Color
+    var radius: CGFloat = 12
+    var border: CGFloat = 3
+    var shadow: CGFloat = 5
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: radius).fill(Color.gpInk).offset(x: shadow, y: shadow)
+            RoundedRectangle(cornerRadius: radius).fill(fill)
+            RoundedRectangle(cornerRadius: radius).strokeBorder(Color.gpInk, lineWidth: border)
+        }
+    }
+}
+
 struct NeoCard: ViewModifier {
     var fill: Color = .gpCard
     var radius: CGFloat = 12
@@ -64,9 +85,7 @@ struct NeoCard: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(padding)
-            .background(fill, in: RoundedRectangle(cornerRadius: radius))
-            .overlay(RoundedRectangle(cornerRadius: radius).strokeBorder(Color.gpInk, lineWidth: border))
-            .hardShadow(shadow)
+            .background(NeoLayeredBackground(fill: fill, radius: radius, border: border, shadow: shadow))
     }
 }
 
@@ -77,9 +96,7 @@ struct NeoSurface: ViewModifier {
     var shadow: CGFloat = 5
     func body(content: Content) -> some View {
         content
-            .background(fill, in: RoundedRectangle(cornerRadius: radius))
-            .overlay(RoundedRectangle(cornerRadius: radius).strokeBorder(Color.gpInk, lineWidth: border))
-            .hardShadow(shadow)
+            .background(NeoLayeredBackground(fill: fill, radius: radius, border: border, shadow: shadow))
     }
 }
 
@@ -119,9 +136,7 @@ struct NeoButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 15)
             .padding(.horizontal, 16)
-            .background(fill, in: RoundedRectangle(cornerRadius: radius))
-            .overlay(RoundedRectangle(cornerRadius: radius).strokeBorder(Color.gpInk, lineWidth: 3))
-            .shadow(color: .gpInk, radius: 0, x: off, y: off)
+            .background(NeoLayeredBackground(fill: fill, radius: radius, border: 3, shadow: off))
             .offset(x: pressed ? (shadow - off) : 0, y: pressed ? (shadow - off) : 0)
             .animation(.easeOut(duration: 0.08), value: pressed)
     }
